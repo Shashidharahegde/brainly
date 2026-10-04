@@ -10,6 +10,14 @@ const noteSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    media:{
+        type: String
+    },
+    // shareId: {
+    //     type: String,
+    //     unique: true,
+    //     required: true
+    // }
 },
 {
     timestamps: true
