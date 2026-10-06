@@ -1,3 +1,6 @@
+import { PenSquareIcon, Trash2 } from "lucide-react";
+import { Link } from "react-router";
+
 const NoteCard = ({ note, onClick }) => {
   const {
     title,
@@ -15,8 +18,7 @@ const NoteCard = ({ note, onClick }) => {
     : null;
 
   return (
-    <article
-      onClick={() => onClick?.(note)}
+    <Link to={`/note/${note._id}`}
       className="
         group cursor-pointer overflow-hidden
         rounded-2xl border border-base-300
@@ -90,8 +92,14 @@ const NoteCard = ({ note, onClick }) => {
             {formattedDate}
           </div>
         )}
+        <div className="flex iteams-center gap-1">
+            <PenSquareIcon className="size-4"/>
+            <button>
+                <Trash2 className="size-4" />
+            </button>
+        </div>
       </div>
-    </article>
+    </Link>
   );
 };
 
