@@ -1,7 +1,212 @@
-import { PenSquareIcon, Trash2 } from "lucide-react";
+import {
+  ExternalLink,
+  PenSquareIcon,
+  Play,
+  Trash2,
+  Volume2,
+} from "lucide-react";
 import { Link } from "react-router";
 
-const NoteCard = ({ note, onClick }) => {
+function getYouTubeId(url) {
+  try {
+    const parsed = new URL(url);
+
+    if (parsed.hostname.includes("youtu.be")) {
+      return parsed.pathname.slice(1);
+    }
+
+    if (parsed.hostname.includes("youtube.com")) {
+      if (parsed.pathname.startsWith("/shorts/")) {
+        return parsed.pathname.split("/shorts/")[1];
+      }
+
+      if (parsed.pathname.startsWith("/embed/")) {
+        return parsed.pathname.split("/embed/")[1];
+      }
+
+      return parsed.searchParams.get("v");
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function getMediaType(url) {
+  if (!url) return null;
+
+  if (getYouTubeId(url)) {
+    return "youtube";
+  }
+
+  const cleanUrl = url.split("?")[0].toLowerCase();
+
+  if (/\.(jpg|jpeg|png|webp|gif|avif)$/.test(cleanUrl)) {
+    return "image";
+  }
+
+  if (/\.(mp4|webm|mov|ogg)$/.test(cleanUrl)) {
+    return "video";
+  }
+
+  if (/\.(mp3|wav|m4a|aac)$/.test(cleanUrl)) {
+    return "audio";
+  }
+
+  try {
+    new URL(url);
+    return "link";
+  } catch {
+    return null;
+  }
+}
+
+function MediaThumbnail({ media, title }) {
+  const type = getMediaType(media);
+
+  if (!media || !type) return null;
+
+  if (type === "youtube") {
+    const youtubeId = getYouTubeId(media);
+
+    return (
+      <div className="relative aspect-video overflow-hidden bg-base-200">
+        <img
+          src={`https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`}
+          alt={title || "YouTube thumbnail"}
+          className="
+            h-full w-full
+            object-cover
+            transition-transform duration-300
+            group-hover:scale-[1.02]
+          "
+        />
+
+        <div className="absolute inset-0 flex items-center justify-center bg-black/5">
+          <div className="flex size-11 items-center justify-center rounded-full bg-black/70 text-white shadow-lg backdrop-blur-sm">
+            <Play
+              size={18}
+              fill="currentColor"
+              className="ml-0.5"
+            />
+          </div>
+        </div>
+
+        <div className="absolute bottom-3 left-3 rounded-full bg-black/65 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-sm">
+          YouTube
+        </div>
+      </div>
+    );
+  }
+
+  if (type === "image") {
+    return (
+      <div className="max-h-64 overflow-hidden bg-base-200">
+        <img
+          src={media}
+          alt={title || "Note attachment"}
+          className="
+            max-h-64
+            w-full
+            object-cover
+            transition-transform duration-300
+            group-hover:scale-[1.02]
+          "
+        />
+      </div>
+    );
+  }
+
+  if (type === "video") {
+    return (
+      <div className="relative aspect-video overflow-hidden bg-black">
+        <video
+          src={media}
+          preload="metadata"
+          muted
+          className="h-full w-full object-cover"
+        />
+
+        <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+          <div className="flex size-11 items-center justify-center rounded-full bg-black/70 text-white shadow-lg backdrop-blur-sm">
+            <Play
+              size={18}
+              fill="currentColor"
+              className="ml-0.5"
+            />
+          </div>
+        </div>
+
+        <div className="absolute bottom-3 left-3 rounded-full bg-black/65 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-sm">
+          Video
+        </div>
+      </div>
+    );
+  }
+
+  if (type === "audio") {
+    return (
+      <div className="flex items-center gap-3 border-b border-base-300 bg-base-200/50 px-5 py-5">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-base-content text-base-100">
+          <Volume2 size={17} />
+        </div>
+
+        <div className="min-w-0">
+          <p className="text-sm font-medium">
+            Audio note
+          </p>
+
+          <p className="mt-0.5 truncate text-xs text-base-content/45">
+            {media}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (type === "link") {
+    let hostname = media;
+
+    try {
+      hostname = new URL(media).hostname.replace(
+        "www.",
+        ""
+      );
+    } catch {
+      hostname = media;
+    }
+
+    return (
+      <div className="flex items-center gap-3 border-b border-base-300 bg-base-200/40 px-5 py-4">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-base-300 bg-base-100">
+          <ExternalLink
+            size={16}
+            className="text-base-content/60"
+          />
+        </div>
+
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium">
+            {hostname}
+          </p>
+
+          <p className="mt-0.5 truncate text-xs text-base-content/45">
+            {media}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
+const NoteCard = ({
+  note,
+  onClick,
+  onDelete,
+}) => {
   const {
     title,
     content,
@@ -17,89 +222,112 @@ const NoteCard = ({ note, onClick }) => {
       }).format(new Date(createdAt))
     : null;
 
+  function handleDelete(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    onDelete?.(note);
+  }
+
   return (
-    <Link to={`/note/${note._id}`}
+    <article
       className="
-        group cursor-pointer overflow-hidden
-        rounded-2xl border border-base-300
+        group relative
+        overflow-hidden
+        rounded-2xl
+        border border-base-300
         bg-base-100
         transition-all duration-200
         hover:border-base-content/20
-        hover:shadow-sm
+        hover:shadow-md
       "
     >
-      {/* Media */}
-      {media && (
-        <div className="overflow-hidden border-b border-base-300">
-          <img
-            src={media}
-            alt={title}
-            className="
-              max-h-64 w-full
-              object-cover
-              transition-transform duration-300
-              group-hover:scale-[1.01]
-            "
-          />
-        </div>
-      )}
+      <Link
+        to={`/note/${note._id}`}
+        onClick={() => onClick?.(note)}
+        className="block"
+      >
+        <MediaThumbnail
+          media={media}
+          title={title}
+        />
 
-      <div className="p-5">
-        {/* Top tags */}
-        {tags.length > 0 && (
-          <div className="mb-4 flex flex-wrap gap-1.5">
-            {tags.map((tag) => (
+        <div className="p-5">
+          {tags.length > 0 && (
+            <div className="mb-4 flex flex-wrap gap-1.5">
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="
+                    badge badge-ghost badge-sm
+                    rounded-full px-2.5
+                    text-[11px] font-medium
+                    text-base-content/60
+                  "
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
+
+          <h3
+            className="
+              text-[17px]
+              font-semibold
+              leading-snug
+              tracking-[-0.015em]
+              text-base-content
+            "
+          >
+            {title}
+          </h3>
+
+          {content && (
+            <p
+              className="
+                mt-2
+                line-clamp-4
+                text-sm
+                leading-6
+                text-base-content/60
+              "
+            >
+              {content}
+            </p>
+          )}
+
+          <div className="mt-5 flex items-center justify-between gap-3">
+            {formattedDate && (
+              <span className="text-xs text-base-content/40">
+                {formattedDate}
+              </span>
+            )}
+
+            <div className="flex items-center gap-1 opacity-60 transition-opacity group-hover:opacity-100">
               <span
-                key={tag}
                 className="
-                  badge badge-ghost badge-sm
-                  rounded-full px-2.5
-                  text-[11px] font-medium
-                  text-base-content/60
+                  btn btn-ghost
+                  btn-circle btn-sm
+                  pointer-events-none
                 "
               >
-                #{tag}
+                <PenSquareIcon size={15} />
               </span>
-            ))}
+
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="btn btn-ghost btn-circle btn-sm"
+                aria-label="Delete note"
+              >
+                <Trash2 size={15} />
+              </button>
+            </div>
           </div>
-        )}
-
-        {/* Title */}
-        <h3
-          className="
-            text-[17px] font-semibold
-            leading-snug tracking-[-0.015em]
-            text-base-content
-          "
-        >
-          {title}
-        </h3>
-
-        {/* Content */}
-        <p
-          className="
-            mt-2 line-clamp-4
-            text-sm leading-6
-            text-base-content/60
-          "
-        >
-          {content}
-        </p>
-
-        {/* Date */}
-        {formattedDate && (
-          <div className="mt-5 text-xs text-base-content/40">
-            {formattedDate}
-          </div>
-        )}
-        <div className="flex iteams-center gap-1">
-            <PenSquareIcon className="size-4"/>
-            <button>
-                <Trash2 className="size-4" />
-            </button>
         </div>
-      </div>
-    </Link>
+      </Link>
+    </article>
   );
 };
 

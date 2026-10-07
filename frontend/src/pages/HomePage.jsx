@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Navbar from "../components/Navbar";
+// import Navbar from "../components/Navbar";
 import axios from "axios";
 import toast from "react-hot-toast";
 import NoteCard from "./NoteCard";
@@ -54,7 +54,6 @@ function HomePage() {
 
   return (
     <div className="min-h-screen bg-base-100">
-      <Navbar />
 
       <main className="mx-auto max-w-7xl px-4 py-8">
         <div className="mb-8 flex items-center justify-between">
