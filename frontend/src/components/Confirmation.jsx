@@ -10,12 +10,10 @@ function ConfirmDialog({
   description,
   confirmText = "Confirm",
   cancelText = "Cancel",
-  secondaryText,
   variant = "default",
   loading = false,
   onConfirm,
   onCancel,
-  onSecondary,
 }) {
   if (!open) return null;
 
@@ -25,11 +23,13 @@ function ConfirmDialog({
       iconClass: "bg-base-200 text-base-content",
       buttonClass: "btn-neutral",
     },
+
     warning: {
       icon: AlertTriangle,
       iconClass: "bg-warning/10 text-warning",
-      buttonClass: "btn-neutral",
+      buttonClass: "btn-warning",
     },
+
     danger: {
       icon: CircleAlert,
       iconClass: "bg-error/10 text-error",
@@ -43,9 +43,10 @@ function ConfirmDialog({
   const Icon = currentVariant.icon;
 
   return (
-    <dialog
-      open
+    <div
       className="modal modal-open z-[100]"
+      role="dialog"
+      aria-modal="true"
       aria-labelledby="confirm-dialog-title"
     >
       <div className="modal-box max-w-sm rounded-3xl p-6">
@@ -73,43 +74,28 @@ function ConfirmDialog({
           </p>
         )}
 
-        <div className="mt-7 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            {secondaryText && (
-              <button
-                type="button"
-                onClick={onSecondary}
-                disabled={loading}
-                className="btn btn-ghost rounded-xl text-error"
-              >
-                {secondaryText}
-              </button>
+        <div className="modal-action mt-6">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={loading}
+            className="btn btn-ghost rounded-xl"
+          >
+            {cancelText}
+          </button>
+
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={loading}
+            className={`btn rounded-xl ${currentVariant.buttonClass}`}
+          >
+            {loading && (
+              <span className="loading loading-spinner loading-sm" />
             )}
-          </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onCancel}
-              disabled={loading}
-              className="btn btn-ghost rounded-xl"
-            >
-              {cancelText}
-            </button>
-
-            <button
-              type="button"
-              onClick={onConfirm}
-              disabled={loading}
-              className={`btn rounded-xl ${currentVariant.buttonClass}`}
-            >
-              {loading && (
-                <span className="loading loading-spinner loading-sm" />
-              )}
-
-              {confirmText}
-            </button>
-          </div>
+            {confirmText}
+          </button>
         </div>
       </div>
 
@@ -119,7 +105,7 @@ function ConfirmDialog({
         onClick={onCancel}
         aria-label="Close confirmation dialog"
       />
-    </dialog>
+    </div>
   );
 }
 

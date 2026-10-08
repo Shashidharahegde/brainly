@@ -1,3 +1,5 @@
+import axios from "axios";
+import toast from "react-hot-toast";
 import {
   ExternalLink,
   PenSquareIcon,
@@ -5,7 +7,9 @@ import {
   Trash2,
   Volume2,
 } from "lucide-react";
+import { useState } from "react";
 import { Link } from "react-router";
+import ConfirmDialog from "../components/Confirmation";
 
 function getYouTubeId(url) {
   try {
@@ -85,11 +89,7 @@ function MediaThumbnail({ media, title }) {
 
         <div className="absolute inset-0 flex items-center justify-center bg-black/5">
           <div className="flex size-11 items-center justify-center rounded-full bg-black/70 text-white shadow-lg backdrop-blur-sm">
-            <Play
-              size={18}
-              fill="currentColor"
-              className="ml-0.5"
-            />
+            <Play size={18} fill="currentColor" className="ml-0.5" />
           </div>
         </div>
 
@@ -130,11 +130,7 @@ function MediaThumbnail({ media, title }) {
 
         <div className="absolute inset-0 flex items-center justify-center bg-black/10">
           <div className="flex size-11 items-center justify-center rounded-full bg-black/70 text-white shadow-lg backdrop-blur-sm">
-            <Play
-              size={18}
-              fill="currentColor"
-              className="ml-0.5"
-            />
+            <Play size={18} fill="currentColor" className="ml-0.5" />
           </div>
         </div>
 
@@ -153,9 +149,7 @@ function MediaThumbnail({ media, title }) {
         </div>
 
         <div className="min-w-0">
-          <p className="text-sm font-medium">
-            Audio note
-          </p>
+          <p className="text-sm font-medium">Audio note</p>
 
           <p className="mt-0.5 truncate text-xs text-base-content/45">
             {media}
@@ -169,10 +163,7 @@ function MediaThumbnail({ media, title }) {
     let hostname = media;
 
     try {
-      hostname = new URL(media).hostname.replace(
-        "www.",
-        ""
-      );
+      hostname = new URL(media).hostname.replace("www.", "");
     } catch {
       hostname = media;
     }
@@ -180,16 +171,11 @@ function MediaThumbnail({ media, title }) {
     return (
       <div className="flex items-center gap-3 border-b border-base-300 bg-base-200/40 px-5 py-4">
         <div className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-base-300 bg-base-100">
-          <ExternalLink
-            size={16}
-            className="text-base-content/60"
-          />
+          <ExternalLink size={16} className="text-base-content/60" />
         </div>
 
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium">
-            {hostname}
-          </p>
+          <p className="truncate text-sm font-medium">{hostname}</p>
 
           <p className="mt-0.5 truncate text-xs text-base-content/45">
             {media}
@@ -202,18 +188,11 @@ function MediaThumbnail({ media, title }) {
   return null;
 }
 
-const NoteCard = ({
-  note,
-  onClick,
-  onDelete,
-}) => {
-  const {
-    title,
-    content,
-    media,
-    tags = [],
-    createdAt,
-  } = note;
+const NoteCard = ({ note, onClick, onDelete }) => {
+  const { title, content, media, tags = [], createdAt } = note;
+
+  const [showDeleteWarning, setShowDeleteWarning] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const formattedDate = createdAt
     ? new Intl.DateTimeFormat("en", {
@@ -222,112 +201,144 @@ const NoteCard = ({
       }).format(new Date(createdAt))
     : null;
 
-  function handleDelete(event) {
+  function handleDeleteRequest(event) {
     event.preventDefault();
     event.stopPropagation();
 
-    onDelete?.(note);
+    setShowDeleteWarning(true);
+  }
+
+  async function handleDelete() {
+    setLoading(true);
+
+    try {
+      await axios.delete(
+        `${import.meta.env.VITE_BACKEND}/api/notes/delete/${note._id}`
+      );
+
+      toast.success("Note deleted");
+
+      setShowDeleteWarning(false);
+
+      onDelete?.(note);
+    } catch (error) {
+      console.error("Error deleting note:", error);
+      toast.error("Couldn't delete note.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <article
-      className="
-        group relative
-        overflow-hidden
-        rounded-2xl
-        border border-base-300
-        bg-base-100
-        transition-all duration-200
-        hover:border-base-content/20
-        hover:shadow-md
-      "
-    >
-      <Link
-        to={`/note/${note._id}`}
-        onClick={() => onClick?.(note)}
-        className="block"
+    <>
+      <article
+        className="
+          group relative
+          overflow-hidden
+          rounded-2xl
+          border border-base-300
+          bg-base-100
+          transition-all duration-200
+          hover:border-base-content/20
+          hover:shadow-md
+        "
       >
-        <MediaThumbnail
-          media={media}
-          title={title}
-        />
+        <Link
+          to={`/note/${note._id}`}
+          onClick={() => onClick?.(note)}
+          className="block"
+        >
+          <MediaThumbnail media={media} title={title} />
 
-        <div className="p-5">
-          {tags.length > 0 && (
-            <div className="mb-4 flex flex-wrap gap-1.5">
-              {tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="
-                    badge badge-ghost badge-sm
-                    rounded-full px-2.5
-                    text-[11px] font-medium
-                    text-base-content/60
-                  "
-                >
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          )}
-
-          <h3
-            className="
-              text-[17px]
-              font-semibold
-              leading-snug
-              tracking-[-0.015em]
-              text-base-content
-            "
-          >
-            {title}
-          </h3>
-
-          {content && (
-            <p
-              className="
-                mt-2
-                line-clamp-4
-                text-sm
-                leading-6
-                text-base-content/60
-              "
-            >
-              {content}
-            </p>
-          )}
-
-          <div className="mt-5 flex items-center justify-between gap-3">
-            {formattedDate && (
-              <span className="text-xs text-base-content/40">
-                {formattedDate}
-              </span>
+          <div className="p-5">
+            {tags.length > 0 && (
+              <div className="mb-4 flex flex-wrap gap-1.5">
+                {tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="
+                      badge badge-ghost badge-sm
+                      rounded-full px-2.5
+                      text-[11px] font-medium
+                      text-base-content/60
+                    "
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
             )}
 
-            <div className="flex items-center gap-1 opacity-60 transition-opacity group-hover:opacity-100">
-              <span
+            <h3
+              className="
+                text-[17px]
+                font-semibold
+                leading-snug
+                tracking-[-0.015em]
+                text-base-content
+              "
+            >
+              {title}
+            </h3>
+
+            {content && (
+              <p
                 className="
-                  btn btn-ghost
-                  btn-circle btn-sm
-                  pointer-events-none
+                  mt-2
+                  line-clamp-4
+                  text-sm
+                  leading-6
+                  text-base-content/60
                 "
               >
-                <PenSquareIcon size={15} />
-              </span>
+                {content}
+              </p>
+            )}
 
-              <button
-                type="button"
-                onClick={handleDelete}
-                className="btn btn-ghost btn-circle btn-sm"
-                aria-label="Delete note"
-              >
-                <Trash2 size={15} />
-              </button>
+            <div className="mt-5 flex items-center justify-between gap-3">
+              {formattedDate && (
+                <span className="text-xs text-base-content/40">
+                  {formattedDate}
+                </span>
+              )}
+
+              <div className="flex items-center gap-1 opacity-60 transition-opacity group-hover:opacity-100">
+                <span
+                  className="
+                    btn btn-ghost
+                    btn-circle btn-sm
+                    pointer-events-none
+                  "
+                >
+                  <PenSquareIcon size={15} />
+                </span>
+
+                <button
+                  type="button"
+                  onClick={handleDeleteRequest}
+                  className="btn btn-ghost btn-circle btn-sm"
+                  aria-label="Delete note"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      </Link>
-    </article>
+        </Link>
+      </article>
+
+      <ConfirmDialog
+        open={showDeleteWarning}
+        title="Delete this note?"
+        description="This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        loading={loading}
+        onCancel={() => setShowDeleteWarning(false)}
+        onConfirm={handleDelete}
+      />
+    </>
   );
 };
 

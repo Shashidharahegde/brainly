@@ -3,12 +3,19 @@ import {
   ArrowLeft,
   ExternalLink,
   Pencil,
-  Play,
   Trash2,
 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, {
+  useEffect,
+  useState,
+} from "react";
 import toast from "react-hot-toast";
-import { Link, useNavigate, useParams } from "react-router";
+import {
+  Link,
+  useNavigate,
+  useParams,
+} from "react-router";
+import ConfirmDialog from "../components/Confirmation";
 
 function getYouTubeId(url) {
   try {
@@ -43,17 +50,31 @@ function getMediaType(url) {
     return "youtube";
   }
 
-  const cleanUrl = url.split("?")[0].toLowerCase();
+  const cleanUrl = url
+    .split("?")[0]
+    .toLowerCase();
 
-  if (/\.(jpg|jpeg|png|webp|gif|avif)$/.test(cleanUrl)) {
+  if (
+    /\.(jpg|jpeg|png|webp|gif|avif)$/.test(
+      cleanUrl
+    )
+  ) {
     return "image";
   }
 
-  if (/\.(mp4|webm|mov|ogg)$/.test(cleanUrl)) {
+  if (
+    /\.(mp4|webm|mov|ogg)$/.test(
+      cleanUrl
+    )
+  ) {
     return "video";
   }
 
-  if (/\.(mp3|wav|m4a|aac)$/.test(cleanUrl)) {
+  if (
+    /\.(mp3|wav|m4a|aac)$/.test(
+      cleanUrl
+    )
+  ) {
     return "audio";
   }
 
@@ -65,19 +86,29 @@ function getMediaType(url) {
   }
 }
 
-function NoteMedia({ media, title }) {
-  const type = getMediaType(media);
+function NoteMedia({
+  media,
+  title,
+}) {
+  const type =
+    getMediaType(media);
 
-  if (!media || !type) return null;
+  if (!media || !type) {
+    return null;
+  }
 
   if (type === "youtube") {
-    const youtubeId = getYouTubeId(media);
+    const youtubeId =
+      getYouTubeId(media);
 
     return (
       <div className="aspect-video overflow-hidden rounded-2xl bg-black">
         <iframe
           src={`https://www.youtube.com/embed/${youtubeId}`}
-          title={title || "YouTube video"}
+          title={
+            title ||
+            "YouTube video"
+          }
           className="h-full w-full"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
@@ -91,7 +122,10 @@ function NoteMedia({ media, title }) {
       <div className="overflow-hidden rounded-2xl border border-base-300 bg-base-200">
         <img
           src={media}
-          alt={title || "Note attachment"}
+          alt={
+            title ||
+            "Note attachment"
+          }
           className="max-h-[70vh] w-full object-contain"
         />
       </div>
@@ -126,7 +160,12 @@ function NoteMedia({ media, title }) {
     let hostname = media;
 
     try {
-      hostname = new URL(media).hostname.replace("www.", "");
+      hostname = new URL(
+        media
+      ).hostname.replace(
+        "www.",
+        ""
+      );
     } catch {
       hostname = media;
     }
@@ -174,50 +213,85 @@ function NoteMedia({ media, title }) {
 
 function NoteDetailPage() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const navigate =
+    useNavigate();
 
-  const [note, setNote] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [deleting, setDeleting] = useState(false);
+  const [note, setNote] =
+    useState(null);
+  const [
+    loading,
+    setLoading,
+  ] = useState(true);
+  const [
+    deleting,
+    setDeleting,
+  ] = useState(false);
+  const [
+    showDeleteWarning,
+    setShowDeleteWarning,
+  ] = useState(false);
 
   useEffect(() => {
-    const fetchNote = async () => {
-      try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND}/api/notes/${id}`
-        );
+    const fetchNote =
+      async () => {
+        try {
+          const response =
+            await axios.get(
+              `${
+                import.meta.env
+                  .VITE_BACKEND
+              }/api/notes/${id}`
+            );
 
-        setNote(response.data);
-      } catch (error) {
-        console.error(error);
-        toast.error("Unable to load this note.");
-      } finally {
-        setLoading(false);
-      }
-    };
+          setNote(
+            response.data
+          );
+        } catch (error) {
+          console.error(
+            error
+          );
+
+          toast.error(
+            "Unable to load this note."
+          );
+        } finally {
+          setLoading(
+            false
+          );
+        }
+      };
 
     fetchNote();
   }, [id]);
 
   async function handleDelete() {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this note?"
-    );
-
-    if (!confirmed) return;
-
     setDeleting(true);
 
     try {
       await axios.delete(
-        `${import.meta.env.VITE_BACKEND}/api/notes/${id}`
+        `${
+          import.meta.env
+            .VITE_BACKEND
+        }/api/notes/${id}`
       );
 
-      toast.success("Note deleted");
+      toast.success(
+        "Note deleted"
+      );
+
+      setShowDeleteWarning(
+        false
+      );
+
       navigate("/");
     } catch (error) {
-      console.error(error);
-      toast.error("Couldn't delete this note.");
+      console.error(
+        error
+      );
+
+      toast.error(
+        "Couldn't delete this note."
+      );
     } finally {
       setDeleting(false);
     }
@@ -239,7 +313,10 @@ function NoteDetailPage() {
         </h1>
 
         <button
-          onClick={() => navigate("/")}
+          type="button"
+          onClick={() =>
+            navigate("/")
+          }
           className="btn btn-neutral rounded-full"
         >
           Back home
@@ -248,11 +325,19 @@ function NoteDetailPage() {
     );
   }
 
-  const formattedDate = new Intl.DateTimeFormat("en", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(new Date(note.createdAt));
+  const formattedDate =
+    new Intl.DateTimeFormat(
+      "en",
+      {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }
+    ).format(
+      new Date(
+        note.createdAt
+      )
+    );
 
   return (
     <div className="min-h-screen bg-base-100">
@@ -260,10 +345,14 @@ function NoteDetailPage() {
         <div className="mb-8 flex items-center justify-between gap-3">
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() =>
+              navigate(-1)
+            }
             className="btn btn-ghost btn-sm rounded-full"
           >
-            <ArrowLeft size={17} />
+            <ArrowLeft
+              size={17}
+            />
             Back
           </button>
 
@@ -272,20 +361,30 @@ function NoteDetailPage() {
               to={`/note/${note._id}/edit`}
               className="btn btn-ghost btn-sm rounded-full"
             >
-              <Pencil size={16} />
+              <Pencil
+                size={16}
+              />
               Edit
             </Link>
 
             <button
               type="button"
-              onClick={handleDelete}
-              disabled={deleting}
+              onClick={() =>
+                setShowDeleteWarning(
+                  true
+                )
+              }
+              disabled={
+                deleting
+              }
               className="btn btn-ghost btn-sm rounded-full text-error"
             >
               {deleting ? (
                 <span className="loading loading-spinner loading-xs" />
               ) : (
-                <Trash2 size={16} />
+                <Trash2
+                  size={16}
+                />
               )}
 
               Delete
@@ -293,33 +392,47 @@ function NoteDetailPage() {
           </div>
         </div>
 
+        
+
         <article>
-          {note.tags?.length > 0 && (
+          {note.tags?.length >
+            0 && (
             <div className="mb-5 flex flex-wrap gap-2">
-              {note.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="badge badge-ghost rounded-full px-3"
-                >
-                  #{tag}
-                </span>
-              ))}
+              {note.tags.map(
+                (tag) => (
+                  <span
+                    key={
+                      tag
+                    }
+                    className="badge badge-ghost rounded-full px-3"
+                  >
+                    #{tag}
+                  </span>
+                )
+              )}
             </div>
           )}
 
           <h1 className="max-w-3xl text-3xl font-semibold tracking-[-0.035em] text-base-content sm:text-4xl md:text-5xl">
-            {note.title || "Untitled"}
+            {note.title ||
+              "Untitled"}
           </h1>
 
           <div className="mt-3 text-sm text-base-content/40">
-            {formattedDate}
+            {
+              formattedDate
+            }
           </div>
 
           {note.media && (
             <div className="mt-8">
               <NoteMedia
-                media={note.media}
-                title={note.title}
+                media={
+                  note.media
+                }
+                title={
+                  note.title
+                }
               />
             </div>
           )}
@@ -327,13 +440,35 @@ function NoteDetailPage() {
           {note.content && (
             <div className="mt-8">
               <p className="whitespace-pre-wrap text-[17px] leading-8 text-base-content/75">
-                {note.content}
+                {
+                  note.content
+                }
               </p>
             </div>
           )}
         </article>
+        <ConfirmDialog
+          open={
+            showDeleteWarning
+          }
+          title="Delete this note?"
+          description="This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+          variant="danger"
+          loading={deleting}
+          onCancel={() =>
+            setShowDeleteWarning(
+              false
+            )
+          }
+          onConfirm={
+            handleDelete
+          }
+        />
       </main>
     </div>
+    
   );
 }
 
