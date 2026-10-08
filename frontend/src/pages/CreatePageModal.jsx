@@ -1,19 +1,23 @@
 import axios from "axios";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import toast from "react-hot-toast";
 import {
   ArrowUpRight,
   Expand,
   Image,
   Link2,
-  Minimize,
   Minimize2,
-  MinimizeIcon,
   Minus,
   Plus,
   Tag,
   X,
 } from "lucide-react";
+import ConfirmDialog from "../components/Confirmation";
 
 function getYouTubeId(url) {
   try {
@@ -42,15 +46,23 @@ function getMediaType(url) {
 
   const cleanUrl = url.split("?")[0].toLowerCase();
 
-  if (/\.(jpg|jpeg|png|webp|gif|avif)$/.test(cleanUrl)) {
+  if (
+    /\.(jpg|jpeg|png|webp|gif|avif)$/.test(
+      cleanUrl
+    )
+  ) {
     return "image";
   }
 
-  if (/\.(mp4|webm|mov|ogg)$/.test(cleanUrl)) {
+  if (
+    /\.(mp4|webm|mov|ogg)$/.test(cleanUrl)
+  ) {
     return "video";
   }
 
-  if (/\.(mp3|wav|m4a|aac)$/.test(cleanUrl)) {
+  if (
+    /\.(mp3|wav|m4a|aac)$/.test(cleanUrl)
+  ) {
     return "audio";
   }
 
@@ -67,7 +79,10 @@ function MediaPreview({ media, onRemove }) {
 
   if (!media || !type) return null;
 
-  const youtubeId = type === "youtube" ? getYouTubeId(media) : null;
+  const youtubeId =
+    type === "youtube"
+      ? getYouTubeId(media)
+      : null;
 
   return (
     <div className="group relative mt-5 overflow-hidden rounded-2xl border border-base-300 bg-base-200/50">
@@ -101,12 +116,20 @@ function MediaPreview({ media, onRemove }) {
       )}
 
       {type === "video" && (
-        <video src={media} controls className="max-h-[420px] w-full bg-black" />
+        <video
+          src={media}
+          controls
+          className="max-h-[420px] w-full bg-black"
+        />
       )}
 
       {type === "audio" && (
         <div className="p-6">
-          <audio src={media} controls className="w-full" />
+          <audio
+            src={media}
+            controls
+            className="w-full"
+          />
         </div>
       )}
 
@@ -118,86 +141,166 @@ function MediaPreview({ media, onRemove }) {
           className="flex items-center justify-between gap-4 p-5 transition hover:bg-base-200"
         >
           <div className="min-w-0">
-            <p className="text-xs text-base-content/50">Saved link</p>
+            <p className="text-xs text-base-content/50">
+              Saved link
+            </p>
 
-            <p className="mt-1 truncate font-medium">{media}</p>
+            <p className="mt-1 truncate font-medium">
+              {media}
+            </p>
           </div>
 
-          <ArrowUpRight size={18} className="shrink-0 text-base-content/50" />
+          <ArrowUpRight
+            size={18}
+            className="shrink-0 text-base-content/50"
+          />
         </a>
       )}
     </div>
   );
 }
 
-function NoteComposer({ onClose, onCreated }) {
+function NoteComposer({
+  onClose,
+  onCreated,
+}) {
   const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
+  const [content, setContent] =
+    useState("");
   const [media, setMedia] = useState("");
   const [tags, setTags] = useState([]);
-  const [tagInput, setTagInput] = useState("");
-  const [showMediaInput, setShowMediaInput] = useState(false);
-  const [expanded, setExpanded] = useState(false);
-  const [minimized, setMinimized] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [frame, setFrame] = useState(null);
-  const [isResizing, setIsResizing] = useState(false);
+  const [tagInput, setTagInput] =
+    useState("");
+  const [
+    showMediaInput,
+    setShowMediaInput,
+  ] = useState(false);
+  const [expanded, setExpanded] =
+    useState(false);
+  const [minimized, setMinimized] =
+    useState(false);
+  const [loading, setLoading] =
+    useState(false);
+  const [frame, setFrame] =
+    useState(null);
+  const [
+    isResizing,
+    setIsResizing,
+  ] = useState(false);
+  const [
+    showCloseWarning,
+    setShowCloseWarning,
+  ] = useState(false);
 
   const composerRef = useRef(null);
   const resizeRef = useRef(null);
 
-  const detectedContentUrl = useMemo(() => {
-    const urls = content.match(/https?:\/\/[^\s]+/g);
+  const detectedContentUrl = useMemo(
+    () => {
+      const urls = content.match(
+        /https?:\/\/[^\s]+/g
+      );
 
-    if (!urls?.length) return "";
+      if (!urls?.length) return "";
 
-    return urls[0];
-  }, [content]);
+      return urls[0];
+    },
+    [content]
+  );
 
-  const activeMedia = media || detectedContentUrl;
+  const activeMedia =
+    media || detectedContentUrl;
+
+  const hasUnsavedChanges = Boolean(
+    title.trim() ||
+      content.trim() ||
+      media.trim() ||
+      tags.length
+  );
 
   function addTag() {
-    const cleaned = tagInput.trim().replace(/^#/, "").toLowerCase();
+    const cleaned = tagInput
+      .trim()
+      .replace(/^#/, "")
+      .toLowerCase();
 
     if (!cleaned) return;
 
     if (!tags.includes(cleaned)) {
-      setTags((current) => [...current, cleaned]);
+      setTags((current) => [
+        ...current,
+        cleaned,
+      ]);
     }
 
     setTagInput("");
   }
 
   function handleTagKeyDown(event) {
-    if (event.key === "Enter" || event.key === ",") {
+    if (
+      event.key === "Enter" ||
+      event.key === ","
+    ) {
       event.preventDefault();
       addTag();
     }
   }
 
-  function getResizeLimits() {
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
+  function handleCloseRequest() {
+    if (!hasUnsavedChanges) {
+      onClose?.();
+      return;
+    }
 
-    const isSmallScreen = window.matchMedia("(max-width: 640px)").matches;
+    setShowCloseWarning(true);
+  }
+
+  function handleDiscard() {
+    setShowCloseWarning(false);
+    onClose?.();
+  }
+
+  function getResizeLimits() {
+    const viewportWidth =
+      window.innerWidth;
+    const viewportHeight =
+      window.innerHeight;
+
+    const isSmallScreen =
+      window.matchMedia(
+        "(max-width: 640px)"
+      ).matches;
 
     return {
       viewportWidth,
       viewportHeight,
-      minimumWidth: isSmallScreen ? viewportWidth * 0.82 : viewportWidth * 0.28,
-      minimumHeight: viewportHeight * 0.35,
+      minimumWidth: isSmallScreen
+        ? viewportWidth * 0.82
+        : viewportWidth * 0.28,
+      minimumHeight:
+        viewportHeight * 0.35,
       marginX: viewportWidth * 0.015,
-      marginY: viewportHeight * 0.015,
+      marginY:
+        viewportHeight * 0.015,
     };
   }
 
-  function handleResizeStart(event, direction) {
-    if (expanded || !composerRef.current) return;
+  function handleResizeStart(
+    event,
+    direction
+  ) {
+    if (
+      expanded ||
+      !composerRef.current
+    ) {
+      return;
+    }
 
     event.preventDefault();
     event.stopPropagation();
 
-    const rect = composerRef.current.getBoundingClientRect();
+    const rect =
+      composerRef.current.getBoundingClientRect();
 
     resizeRef.current = {
       direction,
@@ -218,11 +321,18 @@ function NoteComposer({ onClose, onCreated }) {
 
     setIsResizing(true);
 
-    event.currentTarget.setPointerCapture(event.pointerId);
+    event.currentTarget.setPointerCapture(
+      event.pointerId
+    );
   }
 
   function handleResizeMove(event) {
-    if (!resizeRef.current || expanded) return;
+    if (
+      !resizeRef.current ||
+      expanded
+    ) {
+      return;
+    }
 
     const {
       direction,
@@ -243,49 +353,70 @@ function NoteComposer({ onClose, onCreated }) {
       marginY,
     } = getResizeLimits();
 
-    const deltaX = event.clientX - startX;
-    const deltaY = event.clientY - startY;
+    const deltaX =
+      event.clientX - startX;
+
+    const deltaY =
+      event.clientY - startY;
 
     let left = startLeft;
     let top = startTop;
     let width = startWidth;
     let height = startHeight;
 
-    const rightBoundary = viewportWidth - marginX;
+    const rightBoundary =
+      viewportWidth - marginX;
 
-    const bottomBoundary = viewportHeight - marginY;
+    const bottomBoundary =
+      viewportHeight - marginY;
 
     if (direction.includes("e")) {
       width = Math.max(
         minimumWidth,
-        Math.min(startWidth + deltaX, rightBoundary - startLeft),
+        Math.min(
+          startWidth + deltaX,
+          rightBoundary - startLeft
+        )
       );
     }
 
     if (direction.includes("s")) {
       height = Math.max(
         minimumHeight,
-        Math.min(startHeight + deltaY, bottomBoundary - startTop),
+        Math.min(
+          startHeight + deltaY,
+          bottomBoundary - startTop
+        )
       );
     }
 
     if (direction.includes("w")) {
-      const startRight = startLeft + startWidth;
+      const startRight =
+        startLeft + startWidth;
 
       left = Math.max(
         marginX,
-        Math.min(startLeft + deltaX, startRight - minimumWidth),
+        Math.min(
+          startLeft + deltaX,
+          startRight -
+            minimumWidth
+        )
       );
 
       width = startRight - left;
     }
 
     if (direction.includes("n")) {
-      const startBottom = startTop + startHeight;
+      const startBottom =
+        startTop + startHeight;
 
       top = Math.max(
         marginY,
-        Math.min(startTop + deltaY, startBottom - minimumHeight),
+        Math.min(
+          startTop + deltaY,
+          startBottom -
+            minimumHeight
+        )
       );
 
       height = startBottom - top;
@@ -303,17 +434,30 @@ function NoteComposer({ onClose, onCreated }) {
     resizeRef.current = null;
     setIsResizing(false);
 
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
+    if (
+      event.currentTarget.hasPointerCapture(
+        event.pointerId
+      )
+    ) {
+      event.currentTarget.releasePointerCapture(
+        event.pointerId
+      );
     }
   }
 
-  function getResizeHandlers(direction) {
+  function getResizeHandlers(
+    direction
+  ) {
     return {
-      onPointerDown: (event) => handleResizeStart(event, direction),
+      onPointerDown: (event) =>
+        handleResizeStart(
+          event,
+          direction
+        ),
       onPointerMove: handleResizeMove,
       onPointerUp: handleResizeEnd,
-      onPointerCancel: handleResizeEnd,
+      onPointerCancel:
+        handleResizeEnd,
     };
   }
 
@@ -349,25 +493,48 @@ function NoteComposer({ onClose, onCreated }) {
           marginY,
         } = getResizeLimits();
 
-        const maxWidth = viewportWidth - marginX * 2;
+        const maxWidth =
+          viewportWidth -
+          marginX * 2;
 
-        const maxHeight = viewportHeight - marginY * 2;
+        const maxHeight =
+          viewportHeight -
+          marginY * 2;
 
-        const width = Math.min(Math.max(current.width, minimumWidth), maxWidth);
+        const width = Math.min(
+          Math.max(
+            current.width,
+            minimumWidth
+          ),
+          maxWidth
+        );
 
         const height = Math.min(
-          Math.max(current.height, minimumHeight),
-          maxHeight,
+          Math.max(
+            current.height,
+            minimumHeight
+          ),
+          maxHeight
         );
 
         const left = Math.min(
-          Math.max(current.left, marginX),
-          viewportWidth - width - marginX,
+          Math.max(
+            current.left,
+            marginX
+          ),
+          viewportWidth -
+            width -
+            marginX
         );
 
         const top = Math.min(
-          Math.max(current.top, marginY),
-          viewportHeight - height - marginY,
+          Math.max(
+            current.top,
+            marginY
+          ),
+          viewportHeight -
+            height -
+            marginY
         );
 
         return {
@@ -379,107 +546,164 @@ function NoteComposer({ onClose, onCreated }) {
       });
     }
 
-    window.addEventListener("resize", handleViewportResize);
+    window.addEventListener(
+      "resize",
+      handleViewportResize
+    );
 
     return () => {
-      window.removeEventListener("resize", handleViewportResize);
+      window.removeEventListener(
+        "resize",
+        handleViewportResize
+      );
     };
   }, []);
 
   async function handleSubmit(event) {
-    event.preventDefault();
+    event?.preventDefault();
 
-    if (!title.trim() && !content.trim() && !activeMedia.trim()) {
-      toast.error("Your note is empty.");
+    if (
+      !title.trim() &&
+      !content.trim() &&
+      !activeMedia.trim()
+    ) {
+      toast.error(
+        "Your note is empty."
+      );
       return;
     }
 
     setLoading(true);
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND}/api/notes`,
-        {
-          title: title.trim() || "Untitled",
-          content: content.trim(),
-          media: activeMedia.trim(),
-          tags,
-        },
-      );
+      const response =
+        await axios.post(
+          `${
+            import.meta.env
+              .VITE_BACKEND
+          }/api/notes`,
+          {
+            title:
+              title.trim() ||
+              "Untitled",
+            content:
+              content.trim(),
+            media:
+              activeMedia.trim(),
+            tags,
+          }
+        );
 
       toast.success("Note created");
+
+      setShowCloseWarning(false);
 
       onCreated?.(response.data);
       onClose?.();
     } catch (error) {
-      console.error("Error creating note:", error);
+      console.error(
+        "Error creating note:",
+        error
+      );
 
-      toast.error("Couldn't create your note.");
+      toast.error(
+        "Couldn't create your note."
+      );
     } finally {
       setLoading(false);
     }
   }
 
+  const closeConfirmation = (
+    <ConfirmDialog
+      open={showCloseWarning}
+      title="Save this note?"
+      description="You have unsaved changes. Would you like to save them before closing?"
+      confirmText="Save"
+      cancelText="Keep editing"
+      secondaryText="Discard"
+      variant="warning"
+      loading={loading}
+      onCancel={() =>
+        setShowCloseWarning(false)
+      }
+      onSecondary={handleDiscard}
+      onConfirm={handleSubmit}
+    />
+  );
+
   if (minimized) {
     return (
-      <div
-        className="
-          fixed bottom-3 left-3 right-3 z-50
-          sm:left-auto sm:right-4 sm:w-1/2
-          md:w-1/3
-          lg:w-1/4
-        "
-      >
+      <>
         <div
           className="
-            flex items-center gap-2
-            rounded-2xl
-            border border-base-300
-            bg-base-100
-            p-2
-            shadow-xl
+            fixed bottom-3 left-3
+            right-3 z-50
+            sm:left-auto sm:right-4
+            sm:w-1/2
+            md:w-1/3
+            lg:w-1/4
           "
         >
-          <button
-            type="button"
-            onClick={handleRestore}
-            className="btn btn-ghost btn-circle btn-sm shrink-0"
-            aria-label="Expand note"
+          <div
+            className="
+              flex items-center gap-2
+              rounded-2xl
+              border border-base-300
+              bg-base-100
+              p-2
+              shadow-xl
+            "
           >
-            <Expand size={17} />
-          </button>
+            <button
+              type="button"
+              onClick={handleRestore}
+              className="btn btn-ghost btn-circle btn-sm shrink-0"
+              aria-label="Expand note"
+            >
+              <Expand size={17} />
+            </button>
 
-          <button
-            type="button"
-            onClick={handleRestore}
-            className="min-w-0 flex-1 text-left"
-          >
-            <p className="truncate text-sm font-medium">
-              {title.trim() || "Untitled"}
-            </p>
+            <button
+              type="button"
+              onClick={handleRestore}
+              className="min-w-0 flex-1 text-left"
+            >
+              <p className="truncate text-sm font-medium">
+                {title.trim() ||
+                  "Untitled"}
+              </p>
 
-            <p className="truncate text-xs text-base-content/40">
-              {content.trim() || "New note"}
-            </p>
-          </button>
-          <button
-            type="button"
-            onClick={handleRestore}
-            className="btn btn-ghost btn-circle btn-sm"
-            aria-label="Close note"
-          >
-            <Minus size={19} color={"blue"} className="" />
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="btn btn-ghost btn-circle btn-sm shrink-0"
-            aria-label="Close note"
-          >
-            <X size={17} />
-          </button>
+              <p className="truncate text-xs text-base-content/40">
+                {content.trim() ||
+                  "New note"}
+              </p>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleRestore}
+              className="btn btn-ghost btn-circle btn-sm"
+              aria-label="Restore note"
+            >
+              <Minus size={17} />
+            </button>
+
+            <button
+              type="button"
+              onClick={
+                handleCloseRequest
+              }
+              className="btn btn-ghost btn-circle btn-sm shrink-0"
+              aria-label="Close note"
+            >
+              <X size={17} />
+            </button>
+          </div>
         </div>
-      </div>
+
+        {closeConfirmation}
+      </>
     );
   }
 
@@ -558,7 +782,9 @@ function NoteComposer({ onClose, onCreated }) {
         {!expanded && (
           <>
             <div
-              {...getResizeHandlers("n")}
+              {...getResizeHandlers(
+                "n"
+              )}
               className="
                 absolute
                 left-4 right-4 top-0
@@ -569,7 +795,9 @@ function NoteComposer({ onClose, onCreated }) {
             />
 
             <div
-              {...getResizeHandlers("s")}
+              {...getResizeHandlers(
+                "s"
+              )}
               className="
                 absolute
                 bottom-0 left-4 right-4
@@ -580,7 +808,9 @@ function NoteComposer({ onClose, onCreated }) {
             />
 
             <div
-              {...getResizeHandlers("w")}
+              {...getResizeHandlers(
+                "w"
+              )}
               className="
                 absolute
                 bottom-4 left-0 top-4
@@ -591,7 +821,9 @@ function NoteComposer({ onClose, onCreated }) {
             />
 
             <div
-              {...getResizeHandlers("e")}
+              {...getResizeHandlers(
+                "e"
+              )}
               className="
                 absolute
                 bottom-4 right-0 top-4
@@ -602,7 +834,9 @@ function NoteComposer({ onClose, onCreated }) {
             />
 
             <div
-              {...getResizeHandlers("nw")}
+              {...getResizeHandlers(
+                "nw"
+              )}
               className="
                 group
                 absolute
@@ -629,7 +863,9 @@ function NoteComposer({ onClose, onCreated }) {
             </div>
 
             <div
-              {...getResizeHandlers("ne")}
+              {...getResizeHandlers(
+                "ne"
+              )}
               className="
                 absolute
                 right-0 top-0
@@ -641,7 +877,9 @@ function NoteComposer({ onClose, onCreated }) {
             />
 
             <div
-              {...getResizeHandlers("sw")}
+              {...getResizeHandlers(
+                "sw"
+              )}
               className="
                 absolute
                 bottom-0 left-0
@@ -653,7 +891,9 @@ function NoteComposer({ onClose, onCreated }) {
             />
 
             <div
-              {...getResizeHandlers("se")}
+              {...getResizeHandlers(
+                "se"
+              )}
               className="
                 absolute
                 bottom-0 right-0
@@ -670,11 +910,23 @@ function NoteComposer({ onClose, onCreated }) {
           <div className="flex justify-start">
             <button
               type="button"
-              onClick={handleExpandToggle}
+              onClick={
+                handleExpandToggle
+              }
               className="btn btn-ghost btn-circle btn-sm"
-              aria-label={expanded ? "Restore note" : "Expand note"}
+              aria-label={
+                expanded
+                  ? "Restore note"
+                  : "Expand note"
+              }
             >
-              {expanded ? <Minimize2 size={18} /> : <Expand size={18} />}
+              {expanded ? (
+                <Minimize2
+                  size={18}
+                />
+              ) : (
+                <Expand size={18} />
+              )}
             </button>
           </div>
 
@@ -687,13 +939,16 @@ function NoteComposer({ onClose, onCreated }) {
               type="button"
               onClick={handleMinimize}
               className="btn btn-ghost btn-circle btn-sm"
-              aria-label="Close note"
+              aria-label="Minimize note"
             >
-              <Minus size={19} color={"blue"} className="" />
+              <Minus size={19} />
             </button>
+
             <button
               type="button"
-              onClick={onClose}
+              onClick={
+                handleCloseRequest
+              }
               className="btn btn-ghost btn-circle btn-sm"
               aria-label="Close note"
             >
@@ -714,7 +969,11 @@ function NoteComposer({ onClose, onCreated }) {
           <input
             type="text"
             value={title}
-            onChange={(event) => setTitle(event.target.value)}
+            onChange={(event) =>
+              setTitle(
+                event.target.value
+              )
+            }
             placeholder="Untitled"
             className="
               w-full
@@ -732,7 +991,11 @@ function NoteComposer({ onClose, onCreated }) {
 
           <textarea
             value={content}
-            onChange={(event) => setContent(event.target.value)}
+            onChange={(event) =>
+              setContent(
+                event.target.value
+              )
+            }
             placeholder="Write something, paste a link, or add media…"
             className="
               mt-4
@@ -753,12 +1016,20 @@ function NoteComposer({ onClose, onCreated }) {
           {showMediaInput && (
             <div className="mt-4">
               <label className="input input-bordered flex w-full items-center gap-3 rounded-xl">
-                <Link2 size={17} className="text-base-content/40" />
+                <Link2
+                  size={17}
+                  className="text-base-content/40"
+                />
 
                 <input
                   type="url"
                   value={media}
-                  onChange={(event) => setMedia(event.target.value)}
+                  onChange={(event) =>
+                    setMedia(
+                      event.target
+                        .value
+                    )
+                  }
                   placeholder="Paste an image, video, audio, or link URL"
                   className="grow"
                   autoFocus
@@ -767,7 +1038,12 @@ function NoteComposer({ onClose, onCreated }) {
             </div>
           )}
 
-          <MediaPreview media={activeMedia} onRemove={() => setMedia("")} />
+          <MediaPreview
+            media={activeMedia}
+            onRemove={() =>
+              setMedia("")
+            }
+          />
         </div>
 
         <div className="border-t border-base-300/70 px-4 py-3 sm:px-6 sm:py-4">
@@ -799,9 +1075,15 @@ function NoteComposer({ onClose, onCreated }) {
                   <li>
                     <button
                       type="button"
-                      onClick={() => setShowMediaInput(true)}
+                      onClick={() =>
+                        setShowMediaInput(
+                          true
+                        )
+                      }
                     >
-                      <Image size={17} />
+                      <Image
+                        size={17}
+                      />
                       Add media
                     </button>
                   </li>
@@ -809,9 +1091,15 @@ function NoteComposer({ onClose, onCreated }) {
                   <li>
                     <button
                       type="button"
-                      onClick={() => setShowMediaInput(true)}
+                      onClick={() =>
+                        setShowMediaInput(
+                          true
+                        )
+                      }
                     >
-                      <Link2 size={17} />
+                      <Link2
+                        size={17}
+                      />
                       Add link
                     </button>
                   </li>
@@ -825,11 +1113,21 @@ function NoteComposer({ onClose, onCreated }) {
                     className="badge badge-ghost gap-1 rounded-full"
                   >
                     #{tag}
+
                     <button
                       type="button"
                       onClick={() =>
-                        setTags((current) =>
-                          current.filter((item) => item !== tag),
+                        setTags(
+                          (
+                            current
+                          ) =>
+                            current.filter(
+                              (
+                                item
+                              ) =>
+                                item !==
+                                tag
+                            )
                         )
                       }
                     >
@@ -843,8 +1141,17 @@ function NoteComposer({ onClose, onCreated }) {
 
                   <input
                     value={tagInput}
-                    onChange={(event) => setTagInput(event.target.value)}
-                    onKeyDown={handleTagKeyDown}
+                    onChange={(
+                      event
+                    ) =>
+                      setTagInput(
+                        event.target
+                          .value
+                      )
+                    }
+                    onKeyDown={
+                      handleTagKeyDown
+                    }
                     onBlur={addTag}
                     placeholder="Add tags..."
                     className="w-24 bg-transparent outline-none placeholder:text-base-content/40"
@@ -863,13 +1170,17 @@ function NoteComposer({ onClose, onCreated }) {
               ) : (
                 <>
                   Save
-                  <ArrowUpRight size={16} />
+                  <ArrowUpRight
+                    size={16}
+                  />
                 </>
               )}
             </button>
           </div>
         </div>
       </form>
+
+      {closeConfirmation}
     </>
   );
 }
