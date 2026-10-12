@@ -1,11 +1,18 @@
-import {Job, Worker} from "bullmq"
+import {Worker} from "bullmq"
 import {connection } from '../config/redis.js'
+import {noteProcessor} from '../processors/noteProcessor.js'
+
+import { connectDB } from "../config/db.js";
+import "dotenv/config";
+
+await connectDB()
 
 const noteWorker = new Worker(
     //which queue??
     "notes",
     //this is the business logic
     async (job) => {
+      const result = await noteProcessor(job.data.noteId)
     console.log("Processing note:", job.data.noteId);
   },
 
