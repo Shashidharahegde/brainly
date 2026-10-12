@@ -12,6 +12,12 @@ const noteSchema = new mongoose.Schema(
     },
     media: {
       type: String,
+      default: null,
+    },
+    mediaType: {
+      type: String,
+      enum: ["image", "video", "audio", "youtube", "link"],
+      default: null,
     },
     // shareId: {
     //     type: String,
@@ -23,6 +29,7 @@ const noteSchema = new mongoose.Schema(
         type: String,
         trim: true,
         lowercase: true,
+        default: null,
       },
     ],
   },

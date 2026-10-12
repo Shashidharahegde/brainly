@@ -2,8 +2,9 @@ import Note from "../../../models/Note.js"
 
 export async function editNote (req, res){
     try {
-        const {title, content} = req.body
-        const editedNote = await Note.findByIdAndUpdate(req.params.id,{title, content},
+        const {title, content, tags} = req.body
+        const media = req.body.media || null
+        const editedNote = await Note.findByIdAndUpdate(req.params.id,{title, content, tags, media},
             {
                 new: true
             }
