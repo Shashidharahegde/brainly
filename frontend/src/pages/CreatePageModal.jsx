@@ -18,60 +18,7 @@ import {
   X,
 } from "lucide-react";
 import ConfirmDialog from "../components/Confirmation";
-function getYouTubeId(url) {
-  try {
-    const parsed = new URL(url);
-
-    if (parsed.hostname.includes("youtu.be")) {
-      return parsed.pathname.slice(1);
-    }
-
-    if (parsed.hostname.includes("youtube.com")) {
-      return parsed.searchParams.get("v");
-    }
-
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-function getMediaType(url) {
-  if (!url) return null;
-
-  if (getYouTubeId(url)) {
-    return "youtube";
-  }
-
-  const cleanUrl = url.split("?")[0].toLowerCase();
-
-  if (
-    /\.(jpg|jpeg|png|webp|gif|avif)$/.test(
-      cleanUrl
-    )
-  ) {
-    return "image";
-  }
-
-  if (
-    /\.(mp4|webm|mov|ogg)$/.test(cleanUrl)
-  ) {
-    return "video";
-  }
-
-  if (
-    /\.(mp3|wav|m4a|aac)$/.test(cleanUrl)
-  ) {
-    return "audio";
-  }
-
-  try {
-    new URL(url);
-    return "link";
-  } catch {
-    return null;
-  }
-}
+import { getMediaType, getYouTubeId } from "../utils/getMediaType.js";
 
 function MediaPreview({ media, onRemove }) {
   const type = getMediaType(media);
