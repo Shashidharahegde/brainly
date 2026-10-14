@@ -1,3 +1,4 @@
+//src/utils/getMediaType.js
 export function getYouTubeId(url) {
   try {
     const parsed = new URL(url);
@@ -27,11 +28,18 @@ export function getYouTubeId(url) {
 export function getMediaType(url) {
   if (!url) return null;
 
-  if (getYouTubeId(url)) {
+  url = url.trim();
+
+  // Add https:// if the URL starts with www.
+  const normalizedUrl = /^www\./i.test(url)
+    ? `https://${url}`
+    : url;
+
+  if (getYouTubeId(normalizedUrl)) {
     return "youtube";
   }
-
-  const cleanUrl = url
+  
+  const cleanUrl = normalizedUrl
     .split("?")[0]
     .toLowerCase();
 

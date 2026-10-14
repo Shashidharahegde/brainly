@@ -1,5 +1,8 @@
+
 import Note from "../../models/Note.js";
-import { processRAG } from "../services/ragService/chunkCreator.js";
+import orchestrator from "../services/extractionServices/orchestrator.js";
+import { processRAG } from "../services/ragService/orchestrator.js";
+
 export async function noteProcessor(id) {
   const note = await Note.findById(id);
 
@@ -9,25 +12,23 @@ export async function noteProcessor(id) {
 
   console.log(note);
 
-  //extract info
-
-  const title = note.title;
-  const content = note.content;
-  const tags = note.tags || null;
-
-  const extractedText = [title, content, ...(tags || [])]
-
+  const extractedData = await orchestrator(note);
+  
+  const extractedText = extractedData
     .filter(Boolean)
-    .join("\n");
+    .join("\n\n");
 
-     // 3. Pass extracted text to RAG service
-  await processRAG({
+  console.log("This is the data received from the orchestrator:", extractedText);
+
+  const ans = await processRAG({
     noteId: note._id.toString(),
     text: extractedText,
   });
 
+  console.log(ans);
+
   return {
-    noteId,
+    ans,
     status: "processed",
   };
 }

@@ -14,10 +14,11 @@ const noteWorker = new Worker(
     async (job) => {
       const result = await noteProcessor(job.data.noteId)
     console.log("Processing note:", job.data.noteId);
+    return result
   },
 
   {connection,
-    concurrency: 5,
+    concurrency: 1,
   }
 )
 

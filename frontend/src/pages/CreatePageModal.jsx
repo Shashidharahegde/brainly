@@ -535,8 +535,8 @@ function NoteComposer({
             content:
               content.trim(),
             media:
-              activeMedia.trim(),
-            mediaType: type,
+              activeMedia.trim()?? "",
+            mediaType: activeMedia.trim()?? "",
             tags,
           }
         );

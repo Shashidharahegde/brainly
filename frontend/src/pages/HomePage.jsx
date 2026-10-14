@@ -5,7 +5,7 @@ import { Check, CheckCheck, Plus, Trash2, X } from "lucide-react";
 
 import NoteCard from "./NoteCard";
 import CreatePageModal from "./CreatePageModal";
-import TopBar from "../components/Topbar";
+import TopBar from "../components/TopBar";
 import ConfirmDialog from "../components/Confirmation";
 
 const API_URL = import.meta.env.VITE_BACKEND;
@@ -43,7 +43,6 @@ export default function HomePage({ user = null }) {
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [showBulkDelete, setShowBulkDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [cardsVisible, setCardsVisible] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -57,7 +56,20 @@ export default function HomePage({ user = null }) {
           signal: controller.signal,
         });
         if (!controller.signal.aborted) {
-          setNotes(Array.isArray(data) ? data : []);
+          // Accept common API response envelopes without creating blank cards.
+          const incoming = Array.isArray(data)
+            ? data
+            : Array.isArray(data?.notes)
+              ? data.notes
+              : Array.isArray(data?.data?.notes)
+                ? data.data.notes
+                : null;
+
+          if (!incoming) {
+            throw new Error("Unexpected notes response: expected an array of notes");
+          }
+
+          setNotes(incoming.filter((item) => item && item._id));
         }
       } catch (error) {
         if (controller.signal.aborted) return;
@@ -74,23 +86,6 @@ export default function HomePage({ user = null }) {
     fetchNotes();
     return () => controller.abort();
   }, [reloadKey]);
-
-  // Fade notes into view after loading, using Tailwind transitions only.
-  useEffect(() => {
-    if (loading || loadError) return;
-    setCardsVisible(false);
-    const frame = requestAnimationFrame(() => setCardsVisible(true));
-    return () => cancelAnimationFrame(frame);
-  }, [loading, loadError]);
-
-  const CARD_DELAYS = [
-    "motion-safe:delay-0",
-    "motion-safe:delay-75",
-    "motion-safe:delay-100",
-    "motion-safe:delay-150",
-    "motion-safe:delay-200",
-    "motion-safe:delay-300",
-  ];
 
   const filteredNotes = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -133,7 +128,15 @@ export default function HomePage({ user = null }) {
   }
 
   function handleNoteCreated(newNote) {
-    setNotes((current) => [newNote, ...current]);
+    // Some controllers return { note: createdNote } instead of a note directly.
+    const created = newNote?.note ?? newNote?.data?.note ?? newNote;
+    if (!created?._id || (!Array.isArray(created.blocks) && !created.content && !created.media)) {
+      // Fetch canonical record instead of rendering an empty note preview.
+      setReloadKey((value) => value + 1);
+      return;
+    }
+
+    setNotes((current) => [created, ...current.filter((item) => item._id !== created._id)]);
   }
 
   function handleNoteDeleted(deletedNote) {
@@ -162,7 +165,7 @@ export default function HomePage({ user = null }) {
 
       // Optional backend response: { deletedIds: [...] } for partial successes.
       const deletedIds = Array.isArray(data?.deletedIds)
-        ? data.deletedIds.filter((id) => ids.includes(String(id))).map(String)
+        ? data.deletedIds.map(String).filter((id) => ids.includes(id))
         : ids;
 
       const deletedSet = new Set(deletedIds);
@@ -305,19 +308,13 @@ export default function HomePage({ user = null }) {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filteredNotes.map((note, index) => {
+            {filteredNotes.map((note) => {
               const selected = selectedIds.has(note._id);
 
               return (
                 <div
                   key={note._id}
-                  className={`relative rounded-2xl transition-all duration-200 motion-safe:transition-[opacity,transform] motion-safe:duration-500 motion-safe:ease-out ${
-                    CARD_DELAYS[Math.min(index, CARD_DELAYS.length - 1)]
-                  } ${
-                    cardsVisible
-                      ? "motion-safe:translate-y-0 motion-safe:opacity-100"
-                      : "motion-safe:translate-y-2 motion-safe:opacity-0"
-                  } ${
+                  className={`relative rounded-2xl motion-safe:transition-transform motion-safe:duration-200 motion-safe:hover:-translate-y-0.5 ${
                     selected ? "ring-2 ring-slate-700 ring-offset-2 ring-offset-base-100" : ""
                   }`}
                 >
