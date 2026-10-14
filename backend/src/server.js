@@ -1,5 +1,6 @@
 import express from "express"
 import notesRoutes from "./routes/notesRoutes.js"
+import aiRoutes from "./routes/aiRoutes.js"
 import  {connectDB}  from "./config/db.js"
 import dotenv from "dotenv"
 import limiter from "./config/rateLimitter.js"
@@ -21,5 +22,5 @@ app.use(express.json())
 
 
 app.use("/api/notes", notesRoutes)
-
+app.use("/api/chat", aiRoutes)
 app.listen(PORT, ()=>{console.log("Server Started on PORT:", PORT)})

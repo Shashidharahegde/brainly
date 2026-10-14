@@ -18,7 +18,7 @@ async function orchestrator(note) {
 
     if (content !== "") {
       const data = extractContent(content);
-      console.log(data);
+    //   console.log(data);
       //   const data = await JSON.parse(jsonData);
       textData = data.text;
       links = data.links;
@@ -36,7 +36,6 @@ async function orchestrator(note) {
           const normalizedLink = /^www\./i.test(link)
             ? `https://${link}`
             : link;
-
 
           let mediaType = getMediaType(normalizedLink);
 
@@ -76,7 +75,7 @@ async function orchestrator(note) {
       }
     }
     console.log(
-      "Data extraction successful, returning to noteProcessor from orchi",
+      "Data extraction successful, returning to noteProcessor from orchestrator",
     );
     return dataFromUser;
   }

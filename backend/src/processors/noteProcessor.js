@@ -10,7 +10,7 @@ export async function noteProcessor(id) {
     throw new Error(`Note ${id} not found`);
   }
 
-  console.log(note);
+//   console.log(note);
 
   const extractedData = await orchestrator(note);
   
@@ -25,7 +25,7 @@ export async function noteProcessor(id) {
     text: extractedText,
   });
 
-  console.log(ans);
+//   console.log(ans);
 
   return {
     ans,

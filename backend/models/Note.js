@@ -19,6 +19,7 @@ const noteSchema = new mongoose.Schema(
       enum: ["image", "video", "audio", "youtube", "link"],
       default: null,
     },
+
     // shareId: {
     //     type: String,
     //     unique: true,
