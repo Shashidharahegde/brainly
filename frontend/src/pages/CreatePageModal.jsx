@@ -536,6 +536,7 @@ function NoteComposer({
               content.trim(),
             media:
               activeMedia.trim(),
+            mediaType: type,
             tags,
           }
         );

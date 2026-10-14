@@ -1,160 +1,378 @@
-import React, { useEffect, useState } from "react";
-// import Navbar from "../components/Navbar";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { Check, CheckCheck, Plus, Trash2, X } from "lucide-react";
+
 import NoteCard from "./NoteCard";
 import CreatePageModal from "./CreatePageModal";
-import { PlusIcon } from "lucide-react";
+import TopBar from "../components/Topbar";
+import ConfirmDialog from "../components/Confirmation";
 
+const API_URL = import.meta.env.VITE_BACKEND;
 
-function HomePage() {
+function matchesSearch(note, query) {
+  const textFromBlocks = Array.isArray(note.blocks)
+    ? note.blocks
+        .map((block) => block.text || block.url || "")
+        .join(" ")
+    : "";
+
+  const searchable = [
+    note.title,
+    note.content,
+    textFromBlocks,
+    ...(Array.isArray(note.tags) ? note.tags : []),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return searchable.includes(query);
+}
+
+// `user` can be supplied by your auth provider later, without changing TopBar.
+export default function HomePage({ user = null }) {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const [isRateLimited, setIsRateLimited] = useState(false);
-
+  const [loadError, setLoadError] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [isCreatingNote, setIsCreatingNote] = useState(false);
 
+  const [search, setSearch] = useState("");
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [showBulkDelete, setShowBulkDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [cardsVisible, setCardsVisible] = useState(false);
+
   useEffect(() => {
-    const fetchNotes = async () => {
+    const controller = new AbortController();
+
+    async function fetchNotes() {
+      setLoading(true);
+      setLoadError(null);
+
       try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND}/api/notes`
-        );
-
-        setNotes(res.data);
+        const { data } = await axios.get(`${API_URL}/api/notes`, {
+          signal: controller.signal,
+        });
+        if (!controller.signal.aborted) {
+          setNotes(Array.isArray(data) ? data : []);
+        }
       } catch (error) {
-        console.error(error);
-
-        // Normally rate limiting uses 429.
-        if (error.response?.status === 429) {
-          setIsRateLimited(true);
-        } else {
+        if (controller.signal.aborted) return;
+        console.error("Unable to fetch notes:", error);
+        setLoadError(error.response?.status === 429 ? "rate-limit" : "error");
+        if (error.response?.status !== 429) {
           toast.error("Unable to load your notes.");
         }
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
-    };
+    }
 
     fetchNotes();
-  }, []);
+    return () => controller.abort();
+  }, [reloadKey]);
 
+  // Fade notes into view after loading, using Tailwind transitions only.
+  useEffect(() => {
+    if (loading || loadError) return;
+    setCardsVisible(false);
+    const frame = requestAnimationFrame(() => setCardsVisible(true));
+    return () => cancelAnimationFrame(frame);
+  }, [loading, loadError]);
 
-  const handleNoteCreated = (newNote) => {
-    /*
-      Add the new note immediately instead of
-      fetching every note from the backend again.
-    */
-    setNotes((currentNotes) => [
-      newNote,
-      ...currentNotes,
-    ]);
-  };
+  const CARD_DELAYS = [
+    "motion-safe:delay-0",
+    "motion-safe:delay-75",
+    "motion-safe:delay-100",
+    "motion-safe:delay-150",
+    "motion-safe:delay-200",
+    "motion-safe:delay-300",
+  ];
+
+  const filteredNotes = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return query ? notes.filter((note) => matchesSearch(note, query)) : notes;
+  }, [notes, search]);
+
+  const allVisibleSelected =
+    filteredNotes.length > 0 &&
+    filteredNotes.every((note) => selectedIds.has(note._id));
+
+  function exitSelection() {
+    setSelectedIds(new Set());
+    setSelectionMode(false);
+  }
+
+  function toggleSelect(id) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      for (const note of filteredNotes) {
+        if (allVisibleSelected) next.delete(note._id);
+        else next.add(note._id);
+      }
+      return next;
+    });
+  }
+
+  function handleSearchChange(value) {
+    setSearch(value);
+    // Avoid holding selected notes that are hidden by a new search.
+    setSelectedIds(new Set());
+  }
+
+  function handleNoteCreated(newNote) {
+    setNotes((current) => [newNote, ...current]);
+  }
+
+  function handleNoteDeleted(deletedNote) {
+    const id = typeof deletedNote === "string" ? deletedNote : deletedNote?._id;
+    if (!id) return;
+    setNotes((current) => current.filter((note) => note._id !== id));
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      next.delete(id);
+      return next;
+    });
+  }
+
+  async function handleBulkDelete() {
+    if (deleting || selectedIds.size === 0) return;
+
+    const ids = [...selectedIds];
+    setDeleting(true);
+
+    try {
+      // Backend contract: DELETE /api/notes/bulk with JSON { ids: [...] }.
+      // Only return 2xx if the requested deletion succeeded.
+      const { data } = await axios.delete(`${API_URL}/api/notes/bulk`, {
+        data: { ids },
+      });
+
+      // Optional backend response: { deletedIds: [...] } for partial successes.
+      const deletedIds = Array.isArray(data?.deletedIds)
+        ? data.deletedIds.filter((id) => ids.includes(String(id))).map(String)
+        : ids;
+
+      const deletedSet = new Set(deletedIds);
+      setNotes((current) => current.filter((note) => !deletedSet.has(note._id)));
+      setSelectedIds((current) => {
+        const next = new Set(current);
+        deletedIds.forEach((id) => next.delete(id));
+        return next;
+      });
+
+      setShowBulkDelete(false);
+      if (deletedIds.length === ids.length) {
+        exitSelection();
+        toast.success(`${ids.length} note${ids.length === 1 ? "" : "s"} deleted`);
+      } else {
+        toast(`${deletedIds.length} of ${ids.length} notes deleted. Retry the remaining selection.`);
+      }
+    } catch (error) {
+      console.error("Unable to delete selected notes:", error);
+      toast.error(error.response?.data?.message || "Couldn't delete selected notes.");
+      // Keep selection intact so the user can retry.
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-base-100">
+      <TopBar
+        user={user}
+        value={search}
+        onChange={handleSearchChange}
+        onNewNote={() => setIsCreatingNote(true)}
+      />
 
-      <main className="mx-auto max-w-7xl px-4 py-8">
-        <div className="mb-8 flex items-center justify-between">
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Recent Notes
-            </h1>
-
+            <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">Recent Notes</h2>
             <p className="mt-1 text-sm text-base-content/50">
-              Everything you've saved recently.
+              {search.trim()
+                ? `${filteredNotes.length} matching note${filteredNotes.length === 1 ? "" : "s"}`
+                : "Everything you've saved recently."}
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setIsCreatingNote(true)}
-            className="btn btn-neutral rounded-full px-5"
-          >
-            <PlusIcon size={17} />
-            New Note
-          </button>
+          {!loading && !loadError && notes.length > 0 && !selectionMode && (
+            <button
+              type="button"
+              onClick={() => setSelectionMode(true)}
+              className="btn btn-ghost btn-sm rounded-full border border-base-300 px-4 transition-all duration-200 hover:-translate-y-0.5"
+            >
+              <CheckCheck size={16} /> Select
+            </button>
+          )}
         </div>
 
-        {/* Loading */}
-        {loading && (
+        {selectionMode && (
+          <div className="sticky top-3 z-20 mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-base-300 bg-base-100/95 p-3 shadow-sm backdrop-blur-md sm:px-4">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={exitSelection}
+                disabled={deleting}
+                className="btn btn-ghost btn-sm rounded-full"
+              >
+                <X size={16} /> Cancel
+              </button>
+              <span className="text-sm font-medium text-base-content/70">
+                {selectedIds.size} selected
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={toggleSelectAll}
+                disabled={deleting || filteredNotes.length === 0}
+                className="btn btn-ghost btn-sm rounded-full"
+              >
+                <CheckCheck size={16} />
+                {allVisibleSelected ? "Deselect all" : "Select all"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowBulkDelete(true)}
+                disabled={deleting || selectedIds.size === 0}
+                className="btn btn-error btn-sm rounded-full"
+              >
+                <Trash2 size={16} /> Delete ({selectedIds.size})
+              </button>
+            </div>
+          </div>
+        )}
+
+        {loading ? (
           <div className="flex min-h-64 items-center justify-center">
             <span className="loading loading-spinner loading-md" />
           </div>
-        )}
-
-        {/* Rate limited */}
-        {!loading && isRateLimited && (
-          <div className="flex min-h-64 items-center justify-center">
-            <p className="text-sm text-base-content/50">
-              Too many requests. Please try again shortly.
+        ) : loadError ? (
+          <div className="flex min-h-64 flex-col items-center justify-center gap-4 text-center">
+            <p className="text-sm text-base-content/60">
+              {loadError === "rate-limit"
+                ? "Too many requests. Please try again shortly."
+                : "Unable to load your notes."}
             </p>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm rounded-full"
+              onClick={() => setReloadKey((key) => key + 1)}
+            >
+              Try again
+            </button>
+          </div>
+        ) : notes.length === 0 ? (
+          <div className="flex min-h-80 flex-col items-center justify-center text-center">
+            <h3 className="text-lg font-semibold">No notes yet</h3>
+            <p className="mt-2 max-w-sm text-sm text-base-content/50">
+              Capture a thought, save a link, or add something you want to come back to.
+            </p>
+            <button
+              type="button"
+              onClick={() => setIsCreatingNote(true)}
+              className="btn btn-neutral mt-5 rounded-full"
+            >
+              <Plus size={17} /> Create your first note
+            </button>
+          </div>
+        ) : filteredNotes.length === 0 ? (
+          <div className="flex min-h-64 flex-col items-center justify-center text-center">
+            <h3 className="text-lg font-semibold">No matching notes</h3>
+            <p className="mt-2 text-sm text-base-content/50">Try another search term.</p>
+            <button
+              type="button"
+              onClick={() => handleSearchChange("")}
+              className="btn btn-ghost btn-sm mt-3 rounded-full"
+            >
+              Clear search
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {filteredNotes.map((note, index) => {
+              const selected = selectedIds.has(note._id);
+
+              return (
+                <div
+                  key={note._id}
+                  className={`relative rounded-2xl transition-all duration-200 motion-safe:transition-[opacity,transform] motion-safe:duration-500 motion-safe:ease-out ${
+                    CARD_DELAYS[Math.min(index, CARD_DELAYS.length - 1)]
+                  } ${
+                    cardsVisible
+                      ? "motion-safe:translate-y-0 motion-safe:opacity-100"
+                      : "motion-safe:translate-y-2 motion-safe:opacity-0"
+                  } ${
+                    selected ? "ring-2 ring-slate-700 ring-offset-2 ring-offset-base-100" : ""
+                  }`}
+                >
+                  {/* In selection mode, deactivate the card link and its delete button. */}
+                  <div inert={selectionMode ? "" : undefined} aria-hidden={selectionMode}>
+                    <NoteCard note={note} onDelete={handleNoteDeleted} />
+                  </div>
+
+                  {selectionMode && (
+                    <button
+                      type="button"
+                      onClick={() => toggleSelect(note._id)}
+                      aria-pressed={selected}
+                      aria-label={`${selected ? "Deselect" : "Select"} ${note.title || "Untitled note"}`}
+                      className="absolute inset-0 z-10 cursor-pointer rounded-2xl transition-colors duration-150 hover:bg-base-content/[0.035] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={`pointer-events-none absolute right-3 top-3 grid size-7 place-items-center rounded-full border shadow-sm transition-all duration-150 ${
+                          selected
+                            ? "scale-105 border-slate-800 bg-slate-800 text-white"
+                            : "border-base-300 bg-base-100/95 text-base-content/60"
+                        }`}
+                      >
+                        {selected && <Check size={16} strokeWidth={2.5} />}
+                      </span>
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
-
-        {/* Empty state */}
-        {!loading &&
-          !isRateLimited &&
-          notes.length === 0 && (
-            <div className="flex min-h-420px flex-col items-center justify-center text-center">
-              <h2 className="text-lg font-semibold">
-                No notes yet
-              </h2>
-
-              <p className="mt-2 max-w-sm text-sm text-base-content/50">
-                Capture a thought, save a link, or add
-                something you want to come back to.
-              </p>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setIsCreatingNote(true)
-                }
-                className="btn btn-neutral mt-5 rounded-full"
-              >
-                <PlusIcon size={17} />
-                Create your first note
-              </button>
-            </div>
-          )}
-
-        {/* Notes */}
-
-        {!loading &&
-          !isRateLimited &&
-          notes.length > 0 && (
-            <div
-              className="
-                grid
-                grid-cols-1
-                gap-5
-                sm:grid-cols-2
-                lg:grid-cols-3
-                xl:grid-cols-4
-              "
-            >
-              {notes.map((note) => (
-                <NoteCard
-                  key={note._id}
-                  note={note}
-                />
-              ))}
-            </div>
-          )}
       </main>
 
       {isCreatingNote && (
         <CreatePageModal
-          onClose={() =>
-            setIsCreatingNote(false)
-          }
+          onClose={() => setIsCreatingNote(false)}
           onCreated={handleNoteCreated}
         />
       )}
+
+      <ConfirmDialog
+        open={showBulkDelete}
+        title={`Delete ${selectedIds.size} note${selectedIds.size === 1 ? "" : "s"}?`}
+        description="Selected notes will be permanently deleted. This action cannot be undone."
+        confirmText="Delete selected"
+        cancelText="Cancel"
+        variant="danger"
+        loading={deleting}
+        onCancel={() => {
+          if (!deleting) setShowBulkDelete(false);
+        }}
+        onConfirm={handleBulkDelete}
+      />
     </div>
   );
 }
-
-export default HomePage;
