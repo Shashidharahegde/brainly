@@ -43,7 +43,7 @@ export default function HomePage({ user = null }) {
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [showBulkDelete, setShowBulkDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
-
+  
   useEffect(() => {
     const controller = new AbortController();
 
