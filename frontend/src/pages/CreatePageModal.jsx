@@ -15,6 +15,7 @@ import {
   Minus,
   Plus,
   Tag,
+  FileText,
   X,
 } from "lucide-react";
 import ConfirmDialog from "../components/Confirmation";
@@ -114,6 +115,7 @@ function NoteComposer({
   const [content, setContent] =
     useState("");
   const [media, setMedia] = useState("");
+  const [pdfFile, setPdfFile] = useState(null);
   const [tags, setTags] = useState([]);
   const [tagInput, setTagInput] =
     useState("");
@@ -140,6 +142,7 @@ function NoteComposer({
 
   const composerRef = useRef(null);
   const resizeRef = useRef(null);
+  const pdfInputRef = useRef(null);
 
   const detectedContentUrl = useMemo(
     () => {
@@ -161,6 +164,7 @@ function NoteComposer({
     title.trim() ||
       content.trim() ||
       media.trim() ||
+      pdfFile ||
       tags.length
   );
 
@@ -190,6 +194,21 @@ function NoteComposer({
       event.preventDefault();
       addTag();
     }
+  }
+
+  function handlePdfChange(event) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith(".pdf") || (file.type && file.type !== "application/pdf")) {
+      toast.error("Choose a PDF file.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("PDF must be 10 MB or smaller.");
+      return;
+    }
+    setPdfFile(file);
   }
 
   function handleCloseRequest() {
@@ -511,7 +530,8 @@ function NoteComposer({
     if (
       !title.trim() &&
       !content.trim() &&
-      !activeMedia.trim()
+      !activeMedia.trim() &&
+      !pdfFile
     ) {
       toast.error(
         "Your note is empty."
@@ -522,24 +542,18 @@ function NoteComposer({
     setLoading(true);
 
     try {
-      const response =
-        await axios.post(
-          `${
-            import.meta.env
-              .VITE_BACKEND
-          }/api/notes`,
-          {
-            title:
-              title.trim() ||
-              "Untitled",
-            content:
-              content.trim(),
-            media:
-              activeMedia.trim()?? "",
-            mediaType: activeMedia.trim()?? "",
-            tags,
-          }
-        );
+      const payload = new FormData();
+      payload.append("title", title.trim() || "Untitled");
+      payload.append("content", content.trim());
+      payload.append("media", activeMedia.trim());
+      payload.append("mediaType", activeMedia.trim() ? getMediaType(activeMedia.trim()) || "link" : "");
+      payload.append("tags", JSON.stringify(tags));
+      if (pdfFile) payload.append("pdf", pdfFile);
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND}/api/notes`,
+        payload,
+      );
 
       toast.success("Note created");
 
@@ -960,6 +974,24 @@ function NoteComposer({
             "
           />
 
+          <input
+            ref={pdfInputRef}
+            type="file"
+            accept="application/pdf,.pdf"
+            className="hidden"
+            onChange={handlePdfChange}
+          />
+          {pdfFile && (
+            <div className="mt-4 flex items-center gap-3 rounded-xl border border-base-300 bg-base-200/50 p-3">
+              <FileText size={19} className="shrink-0 text-error" />
+              <span className="min-w-0 flex-1 truncate text-sm">{pdfFile.name}</span>
+              <span className="shrink-0 text-xs text-base-content/45">{(pdfFile.size / (1024 * 1024)).toFixed(1)} MB</span>
+              <button type="button" onClick={() => setPdfFile(null)} aria-label="Remove PDF" className="btn btn-ghost btn-circle btn-xs">
+                <X size={15} />
+              </button>
+            </div>
+          )}
+
           {showMediaInput && (
             <div className="mt-4">
               <label className="input input-bordered flex w-full items-center gap-3 rounded-xl">
@@ -1032,6 +1064,13 @@ function NoteComposer({
                         size={17}
                       />
                       Add media
+                    </button>
+                  </li>
+
+                  <li>
+                    <button type="button" onClick={() => pdfInputRef.current?.click()}>
+                      <FileText size={17} />
+                      Upload PDF
                     </button>
                   </li>
 

@@ -8,7 +8,7 @@ const noteSchema = new mongoose.Schema(
     },
     content: {
       type: String,
-      required: true,
+      default: "",
     },
     media: {
       type: String,
@@ -18,6 +18,12 @@ const noteSchema = new mongoose.Schema(
       type: String,
       enum: ["image", "video", "audio", "youtube", "link"],
       default: null,
+    },
+    pdf: {
+      filename: String,
+      originalName: String,
+      size: Number,
+      url: String,
     },
 
     // shareId: {

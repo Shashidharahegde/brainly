@@ -2,6 +2,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import {
   ExternalLink,
+  FileText,
   PenSquareIcon,
   Play,
   Trash2,
@@ -10,69 +11,16 @@ import {
 import { useState } from "react";
 import { Link } from "react-router";
 import ConfirmDialog from "../components/Confirmation";
+import { getMediaType, getYouTubeId } from "../utils/getMediaType.js";
 
-function getYouTubeId(url) {
-  try {
-    const parsed = new URL(url);
+function MediaThumbnail({ media, pdf, title }) {
+  const attachment = pdf?.url || media;
+  const type = getMediaType(attachment);
 
-    if (parsed.hostname.includes("youtu.be")) {
-      return parsed.pathname.slice(1);
-    }
-
-    if (parsed.hostname.includes("youtube.com")) {
-      if (parsed.pathname.startsWith("/shorts/")) {
-        return parsed.pathname.split("/shorts/")[1];
-      }
-
-      if (parsed.pathname.startsWith("/embed/")) {
-        return parsed.pathname.split("/embed/")[1];
-      }
-
-      return parsed.searchParams.get("v");
-    }
-
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-function getMediaType(url) {
-  if (!url) return null;
-
-  if (getYouTubeId(url)) {
-    return "youtube";
-  }
-
-  const cleanUrl = url.split("?")[0].toLowerCase();
-
-  if (/\.(jpg|jpeg|png|webp|gif|avif)$/.test(cleanUrl)) {
-    return "image";
-  }
-
-  if (/\.(mp4|webm|mov|ogg)$/.test(cleanUrl)) {
-    return "video";
-  }
-
-  if (/\.(mp3|wav|m4a|aac)$/.test(cleanUrl)) {
-    return "audio";
-  }
-
-  try {
-    new URL(url);
-    return "link";
-  } catch {
-    return null;
-  }
-}
-
-function MediaThumbnail({ media, title }) {
-  const type = getMediaType(media);
-
-  if (!media || !type) return null;
+  if (!attachment || !type) return null;
 
   if (type === "youtube") {
-    const youtubeId = getYouTubeId(media);
+    const youtubeId = getYouTubeId(attachment);
 
     return (
       <div className="relative aspect-video overflow-hidden bg-base-200">
@@ -100,11 +48,31 @@ function MediaThumbnail({ media, title }) {
     );
   }
 
+  if (type === "pdf") {
+    const pdfUrl = pdf?.url
+      ? new URL(pdf.url, import.meta.env.VITE_BACKEND).href
+      : attachment;
+
+    return (
+      <div className="relative overflow-hidden bg-base-200">
+        <iframe
+          src={`${pdfUrl}#toolbar=0&navpanes=0`}
+          title={pdf?.originalName || title || "PDF preview"}
+          className="pointer-events-none h-56 w-full border-0"
+        />
+        <div className="absolute bottom-3 left-3 flex items-center gap-2 rounded-full bg-base-100/95 px-3 py-1.5 text-xs font-medium shadow-sm">
+          <FileText size={14} className="text-error" />
+          <span className="max-w-56 truncate">{pdf?.originalName || "PDF"}</span>
+        </div>
+      </div>
+    );
+  }
+
   if (type === "image") {
     return (
       <div className="max-h-64 overflow-hidden bg-base-200">
         <img
-          src={media}
+          src={attachment}
           alt={title || "Note attachment"}
           className="
             max-h-64
@@ -122,7 +90,7 @@ function MediaThumbnail({ media, title }) {
     return (
       <div className="relative aspect-video overflow-hidden bg-black">
         <video
-          src={media}
+          src={attachment}
           preload="metadata"
           muted
           className="h-full w-full object-cover"
@@ -152,7 +120,7 @@ function MediaThumbnail({ media, title }) {
           <p className="text-sm font-medium">Audio note</p>
 
           <p className="mt-0.5 truncate text-xs text-base-content/45">
-            {media}
+            {attachment}
           </p>
         </div>
       </div>
@@ -160,12 +128,12 @@ function MediaThumbnail({ media, title }) {
   }
 
   if (type === "link") {
-    let hostname = media;
+    let hostname = attachment;
 
     try {
-      hostname = new URL(media).hostname.replace("www.", "");
+      hostname = new URL(attachment).hostname.replace("www.", "");
     } catch {
-      hostname = media;
+      hostname = attachment;
     }
 
     return (
@@ -178,7 +146,7 @@ function MediaThumbnail({ media, title }) {
           <p className="truncate text-sm font-medium">{hostname}</p>
 
           <p className="mt-0.5 truncate text-xs text-base-content/45">
-            {media}
+            {attachment}
           </p>
         </div>
       </div>
@@ -189,7 +157,7 @@ function MediaThumbnail({ media, title }) {
 }
 
 const NoteCard = ({ note, onClick, onDelete }) => {
-  const { title, content, media, tags = [], createdAt } = note;
+  const { title, content, media, pdf, tags = [], createdAt } = note;
 
   const [showDeleteWarning, setShowDeleteWarning] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -213,7 +181,7 @@ const NoteCard = ({ note, onClick, onDelete }) => {
 
     try {
       await axios.delete(
-        `${import.meta.env.VITE_BACKEND}/api/notes/delete/${note._id}`
+        `${import.meta.env.VITE_BACKEND}/api/notes/${note._id}`
       );
 
       toast.success("Note deleted");
@@ -248,7 +216,7 @@ const NoteCard = ({ note, onClick, onDelete }) => {
           onClick={() => onClick?.(note)}
           className="block"
         >
-          <MediaThumbnail media={media} title={title} />
+          <MediaThumbnail media={media} pdf={pdf} title={title} />
 
           <div className="p-5">
             {tags.length > 0 && (

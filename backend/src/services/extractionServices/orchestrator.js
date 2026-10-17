@@ -6,6 +6,7 @@ import { youtubeTransctipt } from "./youtubeExtractor.js";
 // import audioExtractor from "./audioExtractor.js";
 // import imageExtractor from "./imageExtractor.js";
 import { scrapeLink } from "./linkExtractor.js";
+import { extractPdfText } from "./pdfExtractor.js";
 
 async function orchestrator(note) {
   async function cleaner() {
@@ -25,6 +26,9 @@ async function orchestrator(note) {
     }
 
     const dataFromUser = [title, content, tags.join(", ")].filter(Boolean);
+
+    const pdfText = await extractPdfText(note.pdf);
+    if (pdfText) dataFromUser.push(pdfText);
 
     let dataFromMedia = "";
 

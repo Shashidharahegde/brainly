@@ -24,6 +24,7 @@ export async function processRAG({ noteId, text }) {
         allChunks.push(chunkNote)
 
     }
+    await NoteChunk.deleteMany({ noteId });
     await NoteChunk.insertMany(allChunks);
   } catch (error) {
     throw error;

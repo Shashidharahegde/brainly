@@ -43,6 +43,10 @@ export function getMediaType(url) {
     .split("?")[0]
     .toLowerCase();
 
+  if (/\.pdf$/.test(cleanUrl)) {
+    return "pdf";
+  }
+
   if (
     /\.(jpg|jpeg|png|webp|gif|avif)$/.test(
       cleanUrl

@@ -48,6 +48,7 @@ ${query}
     return {
       answer: response.text,
       retrievedChunks: chunks.length,
+      
     };
   } catch (error) {
     console.error("AI chat error:", error);

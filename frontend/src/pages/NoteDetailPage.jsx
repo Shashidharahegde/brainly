@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   ArrowUpRight,
   ExternalLink,
+  FileText,
   Link2,
   Pencil,
   Plus,
@@ -243,6 +244,7 @@ function NoteDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const titleRef = useRef(null);
+  const pdfInputRef = useRef(null);
 
   const [note, setNote] = useState(null);
   const [draft, setDraft] = useState({ title: "", content: "", media: "", tags: [] });
@@ -253,6 +255,8 @@ function NoteDetailPage() {
   const [tagInput, setTagInput] = useState("");
   const [showMediaInput, setShowMediaInput] = useState(false);
   const [suppressAutomaticMedia, setSuppressAutomaticMedia] = useState(false);
+  const [pdfFile, setPdfFile] = useState(null);
+  const [removePdf, setRemovePdf] = useState(false);
 
   const isEditing = editing !== null;
   const isSaving = busy === "saving";
@@ -266,7 +270,9 @@ function NoteDetailPage() {
       draft.media !== initialDraft.media ||
       JSON.stringify(draft.tags) !== JSON.stringify(initialDraft.tags) ||
       Boolean(tagInput.trim()) ||
-      suppressAutomaticMedia);
+      suppressAutomaticMedia ||
+      Boolean(pdfFile) ||
+      removePdf);
 
   const visibleTitle = isEditing ? draft.title : note?.title;
   const visibleContent = isEditing ? draft.content : note?.content ?? "";
@@ -288,6 +294,8 @@ function NoteDetailPage() {
       setTagInput("");
       setShowMediaInput(false);
       setSuppressAutomaticMedia(false);
+      setPdfFile(null);
+      setRemovePdf(false);
 
       try {
         const { data } = await axios.get(`${API_URL}/api/notes/${id}`, {
@@ -310,6 +318,22 @@ function NoteDetailPage() {
     return () => controller.abort();
   }, [id]);
 
+  useEffect(() => {
+    if (!note || !["pending", "processing"].includes(note.processingStatus)) return;
+
+    const timer = window.setInterval(async () => {
+      try {
+        const { data } = await axios.get(`${API_URL}/api/notes/${id}`);
+        setNote(data);
+        if (!isEditing) setDraft(makeDraft(data));
+      } catch (error) {
+        console.error("Unable to refresh note processing status:", error);
+      }
+    }, 3000);
+
+    return () => window.clearInterval(timer);
+  }, [id, isEditing, note]);
+
   function updateDraft(field, value) {
     setDraft((current) => ({ ...current, [field]: value }));
   }
@@ -319,6 +343,8 @@ function NoteDetailPage() {
     setTagInput("");
     setShowMediaInput(false);
     setSuppressAutomaticMedia(false);
+    setPdfFile(null);
+    setRemovePdf(false);
     setEditing(null);
   }
 
@@ -352,6 +378,31 @@ function NoteDetailPage() {
     setShowMediaInput(false);
   }
 
+  function handlePdfChange(event) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith(".pdf") || (file.type && file.type !== "application/pdf")) {
+      toast.error("Choose a PDF file.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("PDF must be 10 MB or smaller.");
+      return;
+    }
+    setPdfFile(file);
+    setRemovePdf(false);
+  }
+
+  function handleRemovePdf() {
+    if (pdfFile) {
+      setPdfFile(null);
+      setRemovePdf(false);
+      return;
+    }
+    setRemovePdf(true);
+  }
+
   async function handleSave({ goBack = false } = {}) {
     if (!note || busy) return false;
 
@@ -365,7 +416,13 @@ function NoteDetailPage() {
       return false;
     }
 
-    if (!draft.title.trim() && !content && !media) {
+    if (
+      !draft.title.trim() &&
+      !content &&
+      !media &&
+      !pdfFile &&
+      !(note.pdf && !removePdf)
+    ) {
       toast.error("Your note is empty.");
       titleRef.current?.focus();
       return false;
@@ -384,12 +441,15 @@ function NoteDetailPage() {
       payload.title === (note.title ?? "Untitled") &&
       payload.content === (note.content ?? "") &&
       payload.media === normalizeUrl(note.media) &&
-      JSON.stringify(payload.tags) === JSON.stringify(normalizeTags(note.tags));
+      JSON.stringify(payload.tags) === JSON.stringify(normalizeTags(note.tags)) &&
+      !pdfFile && !removePdf;
 
     if (unchanged) {
       setDraft(makeDraft(note));
       setTagInput("");
       setSuppressAutomaticMedia(false);
+      setPdfFile(null);
+      setRemovePdf(false);
       setShowMediaInput(false);
       setEditing(null);
       setDialog(null);
@@ -400,7 +460,14 @@ function NoteDetailPage() {
     setBusy("saving");
 
     try {
-      const { data } = await axios.put(`${API_URL}/api/notes/${id}`, payload);
+      const formData = new FormData();
+      for (const [key, value] of Object.entries(payload)) {
+        formData.append(key, key === "tags" ? JSON.stringify(value) : value ?? "");
+      }
+      formData.append("removePdf", removePdf ? "true" : "false");
+      if (pdfFile) formData.append("pdf", pdfFile);
+
+      const { data } = await axios.put(`${API_URL}/api/notes/${id}`, formData);
       const savedNote = {
         ...note,
         ...payload,
@@ -409,6 +476,8 @@ function NoteDetailPage() {
 
       setNote(savedNote);
       setDraft(makeDraft(savedNote));
+      setPdfFile(null);
+      setRemovePdf(false);
       setTagInput("");
       setShowMediaInput(false);
       setSuppressAutomaticMedia(false);
@@ -580,6 +649,14 @@ function NoteDetailPage() {
           )}
 
           {formattedDate && <p className="mt-3 text-sm text-base-content/40">{formattedDate}</p>}
+          {note.processingStatus && (
+            <p className="mt-2 text-xs text-base-content/45" role="status">
+              {note.processingStatus === "pending" && "Preparing this note for search…"}
+              {note.processingStatus === "processing" && "Making this note searchable…"}
+              {note.processingStatus === "ready" && "Included in Ask Your Notes"}
+              {note.processingStatus === "failed" && "Could not process this note. Edit and save to retry."}
+            </p>
+          )}
 
           {isEditing && (
             <p className="mt-3 text-xs text-base-content/40">
@@ -597,6 +674,58 @@ function NoteDetailPage() {
               >
                 <Plus size={16} /> {showMediaInput ? "Hide media URL" : "Add media / link"}
               </button>
+
+              <input
+                ref={pdfInputRef}
+                type="file"
+                accept="application/pdf,.pdf"
+                className="hidden"
+                onChange={handlePdfChange}
+              />
+              <button
+                type="button"
+                onClick={() => pdfInputRef.current?.click()}
+                disabled={!!busy}
+                className="btn btn-ghost btn-sm rounded-xl bg-base-200"
+              >
+                <FileText size={16} /> {note.pdf?.originalName || "Upload PDF"}
+              </button>
+
+              {(pdfFile || (note.pdf && !removePdf)) && (
+                <div className="flex items-center gap-3 rounded-xl border border-base-300 bg-base-200/50 p-3">
+                  <FileText size={18} className="shrink-0 text-error" />
+                  <span className="min-w-0 flex-1 truncate text-sm">
+                    {pdfFile?.name || note.pdf.originalName}
+                  </span>
+                  {pdfFile ? (
+                    <span className="shrink-0 text-xs text-base-content/45">
+                      {(pdfFile.size / (1024 * 1024)).toFixed(1)} MB
+                    </span>
+                  ) : (
+                    <a
+                      href={`${API_URL}${note.pdf.url}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-ghost btn-xs"
+                    >
+                      Open
+                    </a>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleRemovePdf}
+                    disabled={!!busy}
+                    aria-label="Remove PDF attachment"
+                    className="btn btn-ghost btn-circle btn-xs"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
+
+              {removePdf && note.pdf && !pdfFile && (
+                <p className="text-xs text-base-content/50">PDF will be removed when you save.</p>
+              )}
 
               {showMediaInput && (
                 <label className="input input-bordered flex w-full items-center gap-3 rounded-xl">
@@ -616,6 +745,19 @@ function NoteDetailPage() {
                 </label>
               )}
             </div>
+          )}
+
+          {!isEditing && note.pdf?.url && (
+            <a
+              href={`${API_URL}${note.pdf.url}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-6 flex items-center gap-3 rounded-xl border border-base-300 bg-base-200/40 p-4 transition hover:bg-base-200"
+            >
+              <FileText size={20} className="text-error" />
+              <span className="min-w-0 flex-1 truncate text-sm font-medium">{note.pdf.originalName}</span>
+              <span className="text-xs text-base-content/45">Open PDF</span>
+            </a>
           )}
 
           {activeMedia && (

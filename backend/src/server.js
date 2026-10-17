@@ -5,6 +5,7 @@ import  {connectDB}  from "./config/db.js"
 import dotenv from "dotenv"
 import limiter from "./config/rateLimitter.js"
 import cors from "cors"
+import { PDF_UPLOAD_DIR } from "./utils/pdfFiles.js"
 
 dotenv.config()
 const app = express()
@@ -19,6 +20,7 @@ app.use(cors({
 
 app.use(limiter)
 app.use(express.json())
+app.use("/uploads", express.static(PDF_UPLOAD_DIR))
 
 
 app.use("/api/notes", notesRoutes)
