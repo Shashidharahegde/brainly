@@ -1,8 +1,11 @@
-import express from "express"
-import { aiChat } from "../services/ragService/aiChat.js"
+import express from "express";
+import { createNewChat } from "../services/chatService/newChat.js";
+// import getChat from "../services/chatService/getChat.js";
+import sendMessage from "../services/chatService/sendMessage.js";
+const router = express.Router();
 
-const router = express.Router()
+router.post("/", createNewChat);
+// router.get("/:chatId", getChat);
+router.post("/:chatId/messages", sendMessage)
 
-router.post('/', aiChat)
-
-export default router
+export default router;
