@@ -2,6 +2,12 @@ import mongoose from "mongoose";
 
 const noteChunkSchema = new mongoose.Schema(
   {
+    ownerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
     noteId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Note",

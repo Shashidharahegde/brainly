@@ -5,10 +5,10 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
-export async function generateEmbeddings(documents) {
+export async function generateEmbeddings(documents, onProgress = async () => {}) {
   const results = [];
 
-  for (const doc of documents) {
+  for (const [index, doc] of documents.entries()) {
     const response = await ai.models.embedContent({
       model: "gemini-embedding-2",
       contents: `title: none | text: ${doc.text}`,
@@ -29,6 +29,7 @@ export async function generateEmbeddings(documents) {
       ...doc,
       embedding,
     });
+    await onProgress(((index + 1) / documents.length) * 100);
   }
 
   return results;

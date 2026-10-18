@@ -1,4 +1,3 @@
-import axios from "axios";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import {
@@ -17,9 +16,9 @@ import {
 import { useNavigate, useParams } from "react-router";
 
 import ConfirmDialog from "../components/Confirmation";
+import ProcessingMedia from "../components/ProcessingMedia";
 import { getMediaType, getYouTubeId } from "../utils/getMediaType.js";
-
-const API_URL = import.meta.env.VITE_BACKEND;
+import api from "../lib/api";
 
 // Handles http(s) URLs, www. URLs, and bare domains such as youtube.com/...
 const URL_REGEX =
@@ -256,6 +255,7 @@ function NoteDetailPage() {
   const [showMediaInput, setShowMediaInput] = useState(false);
   const [suppressAutomaticMedia, setSuppressAutomaticMedia] = useState(false);
   const [pdfFile, setPdfFile] = useState(null);
+  const [pdfObjectUrl, setPdfObjectUrl] = useState(null);
   const [removePdf, setRemovePdf] = useState(false);
 
   const isEditing = editing !== null;
@@ -298,7 +298,7 @@ function NoteDetailPage() {
       setRemovePdf(false);
 
       try {
-        const { data } = await axios.get(`${API_URL}/api/notes/${id}`, {
+        const { data } = await api.get(`/notes/${id}`, {
           signal: controller.signal,
         });
 
@@ -319,20 +319,45 @@ function NoteDetailPage() {
   }, [id]);
 
   useEffect(() => {
-    if (!note || !["pending", "processing"].includes(note.processingStatus)) return;
+    const isProcessing = ["pending", "processing"].includes(note?.processingStatus);
+    if (!isProcessing) return;
 
     const timer = window.setInterval(async () => {
       try {
-        const { data } = await axios.get(`${API_URL}/api/notes/${id}`);
+        const { data } = await api.get(`/notes/${id}`);
         setNote(data);
         if (!isEditing) setDraft(makeDraft(data));
       } catch (error) {
         console.error("Unable to refresh note processing status:", error);
       }
-    }, 3000);
+    }, 1500);
 
     return () => window.clearInterval(timer);
-  }, [id, isEditing, note]);
+  }, [id, isEditing, note?.processingStatus]);
+
+  useEffect(() => {
+    if (!note?._id || !note.pdf?.filename) return;
+
+    let cancelled = false;
+    let objectUrl;
+
+    api.get(`/notes/${note._id}/pdf`, { responseType: "blob" })
+      .then(({ data }) => {
+        objectUrl = URL.createObjectURL(data);
+        if (cancelled) URL.revokeObjectURL(objectUrl);
+        else setPdfObjectUrl({ key: `${note._id}:${note.pdf.filename}`, url: objectUrl });
+      })
+      .catch((error) => console.error("Unable to load PDF:", error));
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [note?._id, note?.pdf?.filename]);
+
+  const pdfUrl = pdfObjectUrl?.key === `${note?._id}:${note?.pdf?.filename}`
+    ? pdfObjectUrl.url
+    : null;
 
   function updateDraft(field, value) {
     setDraft((current) => ({ ...current, [field]: value }));
@@ -467,11 +492,17 @@ function NoteDetailPage() {
       formData.append("removePdf", removePdf ? "true" : "false");
       if (pdfFile) formData.append("pdf", pdfFile);
 
-      const { data } = await axios.put(`${API_URL}/api/notes/${id}`, formData);
+      const { data } = await api.put(`/notes/${id}`, formData);
       const savedNote = {
         ...note,
         ...payload,
-        ...(data?.note?._id ? data.note : data?._id ? data : {}),
+        ...(data?.editedNote?._id
+          ? data.editedNote
+          : data?.note?._id
+            ? data.note
+            : data?._id
+              ? data
+              : {}),
       };
 
       setNote(savedNote);
@@ -501,7 +532,7 @@ function NoteDetailPage() {
     setBusy("deleting");
 
     try {
-      await axios.delete(`${API_URL}/api/notes/${id}`);
+      await api.delete(`/notes/${id}`);
       toast.success("Note deleted");
       setDialog(null);
       navigate("/", { replace: true });
@@ -649,12 +680,10 @@ function NoteDetailPage() {
           )}
 
           {formattedDate && <p className="mt-3 text-sm text-base-content/40">{formattedDate}</p>}
-          {note.processingStatus && (
+          <ProcessingMedia status={note.processingStatus} progress={note.processingProgress} />
+          {note.processingStatus === "completed" && (
             <p className="mt-2 text-xs text-base-content/45" role="status">
-              {note.processingStatus === "pending" && "Preparing this note for search…"}
-              {note.processingStatus === "processing" && "Making this note searchable…"}
-              {note.processingStatus === "ready" && "Included in Ask Your Notes"}
-              {note.processingStatus === "failed" && "Could not process this note. Edit and save to retry."}
+              Included in Ask Your Notes
             </p>
           )}
 
@@ -703,7 +732,10 @@ function NoteDetailPage() {
                     </span>
                   ) : (
                     <a
-                      href={`${API_URL}${note.pdf.url}`}
+                      href={pdfUrl || undefined}
+                      onClick={(event) => {
+                        if (!pdfUrl) event.preventDefault();
+                      }}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="btn btn-ghost btn-xs"
@@ -749,7 +781,10 @@ function NoteDetailPage() {
 
           {!isEditing && note.pdf?.url && (
             <a
-              href={`${API_URL}${note.pdf.url}`}
+              href={pdfUrl || undefined}
+              onClick={(event) => {
+                if (!pdfUrl) event.preventDefault();
+              }}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-6 flex items-center gap-3 rounded-xl border border-base-300 bg-base-200/40 p-4 transition hover:bg-base-200"

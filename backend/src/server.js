@@ -6,6 +6,9 @@ import dotenv from "dotenv"
 import limiter from "./config/rateLimitter.js"
 import cors from "cors"
 import { PDF_UPLOAD_DIR } from "./utils/pdfFiles.js"
+import authRoutes from "./routes/authRoutes.js"
+
+import { authMiddleware } from "../middleware/authMiddleware.js"
 
 dotenv.config()
 const app = express()
@@ -15,11 +18,15 @@ connectDB()
 
 app.use(cors({
     origin: Frontend,
+    allowedHeaders: ['Content-Type', 'Authorization']
 }
 ))
 
+
 app.use(limiter)
 app.use(express.json())
+app.use("/api/auth", authRoutes)
+app.use(authMiddleware)
 app.use("/uploads", express.static(PDF_UPLOAD_DIR))
 
 

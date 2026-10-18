@@ -2,9 +2,9 @@ import Note from "../../../models/Note.js"
 export async function getNoteById(req, res) {
 
     try {
-        const note = await Note.findById(req.params.id)
+        const note = await Note.findOne({ _id: req.params.id, ownerId: req.user.userId })
         if (!note){
-            res.status(404).json({message:"Note not found"})
+            return res.status(404).json({message:"Note not found"})
         }
         else{
             res.status(200).json(note)

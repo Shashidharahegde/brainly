@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { NavLink } from "react-router";
+import { useEffect, useRef } from "react";
+import { NavLink, useNavigate } from "react-router";
 import { BookOpenText, MessageSquareText, X } from "lucide-react";
 
 const links = [
@@ -18,11 +18,46 @@ const links = [
   },
 ];
 
-function SidebarContent({ onNavigate }) {
+function SidebarContent({ onNavigate, onAskOpen }) {
+  const navigate = useNavigate();
+  const clickTimer = useRef(null);
+
+  useEffect(() => () => clearTimeout(clickTimer.current), []);
+
   return (
     <nav className="space-y-2 px-3 py-5" aria-label="Main navigation">
       {links.map(({ to, end, label, description, icon: Icon }) => (
-        <NavLink
+        {to === "/ask" ? (
+          <button
+          key={to}
+          type="button"
+          onClick={(event) => {
+            if (event.detail > 1) {
+              clearTimeout(clickTimer.current);
+              navigate("/ask");
+              onNavigate?.();
+              return;
+            }
+            clearTimeout(clickTimer.current);
+            clickTimer.current = setTimeout(() => {
+              onAskOpen?.();
+              onNavigate?.();
+            }, 220);
+          }}
+          onDoubleClick={() => {
+            clearTimeout(clickTimer.current);
+            navigate("/ask");
+            onNavigate?.();
+          }}
+          className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors duration-150 text-base-content/65 hover:bg-base-200/70 hover:text-base-content`}
+        >
+          <Icon size={20} className="shrink-0" aria-hidden="true" />
+          <span className="min-w-0">
+            <span className="block truncate text-sm">{label}</span>
+            <span className="block truncate text-xs font-normal text-base-content/50">{description}</span>
+          </span>
+        </button>
+        ) : <NavLink
           key={to}
           to={to}
           end={end}
@@ -42,13 +77,13 @@ function SidebarContent({ onNavigate }) {
               {description}
             </span>
           </span>
-        </NavLink>
+        </NavLink>}
       ))}
     </nav>
   );
 }
 
-export default function Sidebar({ desktopOpen, mobileOpen, onMobileClose }) {
+export default function Sidebar({ desktopOpen, mobileOpen, onMobileClose, onAskOpen }) {
   useEffect(() => {
     if (!mobileOpen) return;
 
@@ -81,7 +116,7 @@ export default function Sidebar({ desktopOpen, mobileOpen, onMobileClose }) {
           <div className="flex h-16 items-center border-b border-base-300 px-6">
             <span className="text-lg font-bold tracking-tight">Workspace</span>
           </div>
-          <SidebarContent />
+          <SidebarContent onAskOpen={onAskOpen} />
         </div>
       </aside>
       
@@ -122,7 +157,7 @@ export default function Sidebar({ desktopOpen, mobileOpen, onMobileClose }) {
               <X size={20} />
             </button>
           </div>
-          <SidebarContent onNavigate={onMobileClose} />
+          <SidebarContent onNavigate={onMobileClose} onAskOpen={onAskOpen} />
         </aside>
       </div>
     </>

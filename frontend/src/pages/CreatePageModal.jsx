@@ -1,4 +1,4 @@
-import axios from "axios";
+import api from "../lib/api";
 import React, {
   useEffect,
   useMemo,
@@ -550,10 +550,7 @@ function NoteComposer({
       payload.append("tags", JSON.stringify(tags));
       if (pdfFile) payload.append("pdf", pdfFile);
 
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND}/api/notes`,
-        payload,
-      );
+      const response = await api.post("/notes", payload);
 
       toast.success("Note created");
 

@@ -1,4 +1,3 @@
-import axios from "axios";
 import toast from "react-hot-toast";
 import {
   ExternalLink,
@@ -8,14 +7,40 @@ import {
   Trash2,
   Volume2,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import ConfirmDialog from "../components/Confirmation";
+import ProcessingMedia from "../components/ProcessingMedia";
 import { getMediaType, getYouTubeId } from "../utils/getMediaType.js";
+import api from "../lib/api";
 
-function MediaThumbnail({ media, pdf, title }) {
+function MediaThumbnail({ noteId, media, pdf, title }) {
   const attachment = pdf?.url || media;
   const type = getMediaType(attachment);
+  const [pdfPreview, setPdfPreview] = useState(null);
+  const pdfKey = `${noteId}:${pdf?.filename}`;
+
+  useEffect(() => {
+    if (type !== "pdf" || !noteId) return;
+
+    let cancelled = false;
+    let objectUrl;
+
+    api.get(`/notes/${noteId}/pdf`, { responseType: "blob" })
+      .then(({ data }) => {
+        objectUrl = URL.createObjectURL(data);
+        if (cancelled) URL.revokeObjectURL(objectUrl);
+        else setPdfPreview({ key: pdfKey, url: objectUrl });
+      })
+      .catch((error) => console.error("Unable to load PDF preview:", error));
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [noteId, pdf?.filename, pdfKey, type]);
+
+  const pdfPreviewUrl = pdfPreview?.key === pdfKey ? pdfPreview.url : null;
 
   if (!attachment || !type) return null;
 
@@ -49,14 +74,10 @@ function MediaThumbnail({ media, pdf, title }) {
   }
 
   if (type === "pdf") {
-    const pdfUrl = pdf?.url
-      ? new URL(pdf.url, import.meta.env.VITE_BACKEND).href
-      : attachment;
-
     return (
       <div className="relative overflow-hidden bg-base-200">
         <iframe
-          src={`${pdfUrl}#toolbar=0&navpanes=0`}
+          src={pdfPreviewUrl ? `${pdfPreviewUrl}#toolbar=0&navpanes=0` : undefined}
           title={pdf?.originalName || title || "PDF preview"}
           className="pointer-events-none h-56 w-full border-0"
         />
@@ -180,9 +201,7 @@ const NoteCard = ({ note, onClick, onDelete }) => {
     setLoading(true);
 
     try {
-      await axios.delete(
-        `${import.meta.env.VITE_BACKEND}/api/notes/${note._id}`
-      );
+      await api.delete(`/notes/${note._id}`);
 
       toast.success("Note deleted");
 
@@ -216,7 +235,7 @@ const NoteCard = ({ note, onClick, onDelete }) => {
           onClick={() => onClick?.(note)}
           className="block"
         >
-          <MediaThumbnail media={media} pdf={pdf} title={title} />
+          <MediaThumbnail noteId={note._id} media={media} pdf={pdf} title={title} />
 
           <div className="p-5">
             {tags.length > 0 && (
@@ -248,6 +267,8 @@ const NoteCard = ({ note, onClick, onDelete }) => {
             >
               {title}
             </h3>
+
+            <ProcessingMedia status={note.processingStatus} progress={note.processingProgress} />
 
             {content && (
               <p

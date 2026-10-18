@@ -8,7 +8,7 @@ import { youtubeTransctipt } from "./youtubeExtractor.js";
 import { scrapeLink } from "./linkExtractor.js";
 import { extractPdfText } from "./pdfExtractor.js";
 
-async function orchestrator(note) {
+async function orchestrator(note, onProgress = async () => {}) {
   async function cleaner() {
     const title = note.title ?? "";
     let content = note.content ?? "";
@@ -27,13 +27,17 @@ async function orchestrator(note) {
 
     const dataFromUser = [title, content, tags.join(", ")].filter(Boolean);
 
+    await onProgress(10);
     const pdfText = await extractPdfText(note.pdf);
     if (pdfText) dataFromUser.push(pdfText);
+    await onProgress(20);
 
     let dataFromMedia = "";
 
     if (links !== null) {
-      for (const rawLink of links) {
+      for (const [index, rawLink] of links.entries()) {
+        const linkProgress = (step) => 20 + ((index + step) / links.length) * 15;
+        await onProgress(linkProgress(0));
         try {
           const link = rawLink.trim();
 
@@ -75,6 +79,8 @@ async function orchestrator(note) {
           }
         } catch (error) {
           console.error(`Extraction failed for ${normalizedLink}:`, error);
+        } finally {
+          await onProgress(linkProgress(1));
         }
       }
     }

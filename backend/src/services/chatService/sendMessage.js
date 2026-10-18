@@ -9,13 +9,14 @@ export default async function sendMessage(req, res) {
     const { chatId } = req.params;
     const { query } = req.body;
 
-    const currentChat = await Chat.findById(chatId);
+    const currentChat = await Chat.findOne({ _id: chatId, ownerId: req.user.userId });
     if (!currentChat) {
-      throw new Error("Chat not found");
+      return res.status(404).json({ message: "Chat not found" });
     }
 
     const previousMessages = await ChatMessage.find({
       chatId: currentChat._id,
+      ownerId: req.user.userId,
     })
       .sort({ createdAt: -1 })
       .limit(10)
@@ -34,6 +35,7 @@ export default async function sendMessage(req, res) {
 
 
     await ChatMessage.create({
+      ownerId: req.user.userId,
       chatId: currentChat._id,
       role: "user",
       content: query,
@@ -42,15 +44,22 @@ export default async function sendMessage(req, res) {
     const response = await aiChat({
       query: query,
       history: history,
+      ownerId: req.user.userId,
     });
 
     const answer = response.answer
 
     await ChatMessage.create({
+      ownerId: req.user.userId,
       chatId: currentChat._id,
       role: "assistant",
       content: answer,
     });
+
+    await Chat.updateOne(
+      { _id: currentChat._id, ownerId: req.user.userId },
+      { lastMessageAt: new Date() },
+    );
 
     res.status(201).json({ chatId: currentChat._id, answer });
   } catch (error) {

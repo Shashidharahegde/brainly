@@ -8,18 +8,24 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
-export async function aiChat({ query, history }) {
+export async function aiChat({ query, history, ownerId }) {
   try {
     if (typeof query !== "string" || !query.trim()) {
       throw new Error("A question is required");
     }
 
     // 1. Retrieve relevant chunks
-    const chunks = await retrieveChunks(query);
+    const chunks = await retrieveChunks(query, ownerId);
 
     // 2. Convert chunks into context text
     const context = chunks
-      .map((chunk) => chunk.text)
+      .map((chunk) => {
+        const origin = chunk.mediaType
+          ? `Associated external source: ${chunk.mediaType} (the note may also contain user-authored content)`
+          : "User-authored note (no external media source is attached)";
+
+        return `${origin}\nNote title: ${chunk.title || "Untitled"}\nMedia type: ${chunk.mediaType || "none"}\nURL: ${chunk.url || "none"}\nRetrieved text: ${chunk.text}`;
+      })
       .join("\n\n");
 
     // 3. Convert history into readable text

@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import axios from "axios";
 import toast from "react-hot-toast";
 import { Check, CheckCheck, Plus, Trash2, X } from "lucide-react";
 
@@ -7,8 +6,7 @@ import NoteCard from "./NoteCard";
 import CreatePageModal from "./CreatePageModal";
 import TopBar from "../components/TopBar";
 import ConfirmDialog from "../components/Confirmation";
-
-const API_URL = import.meta.env.VITE_BACKEND;
+import api from "../lib/api";
 
 function matchesSearch(note, query) {
   const textFromBlocks = Array.isArray(note.blocks)
@@ -52,7 +50,7 @@ export default function HomePage({ user = null }) {
       setLoadError(null);
 
       try {
-        const { data } = await axios.get(`${API_URL}/api/notes`, {
+        const { data } = await api.get("/notes", {
           signal: controller.signal,
         });
         if (!controller.signal.aborted) {
@@ -86,6 +84,33 @@ export default function HomePage({ user = null }) {
     fetchNotes();
     return () => controller.abort();
   }, [reloadKey]);
+
+  const hasProcessingNotes = notes.some((note) =>
+    ["pending", "processing"].includes(note.processingStatus),
+  );
+
+  useEffect(() => {
+    if (!hasProcessingNotes) return;
+
+    const timer = window.setInterval(async () => {
+      try {
+        const { data } = await api.get("/notes");
+        const incoming = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.notes)
+            ? data.notes
+            : Array.isArray(data?.data?.notes)
+              ? data.data.notes
+              : null;
+
+        if (incoming) setNotes(incoming.filter((item) => item && item._id));
+      } catch (error) {
+        console.error("Unable to refresh note processing status:", error);
+      }
+    }, 1500);
+
+    return () => window.clearInterval(timer);
+  }, [hasProcessingNotes]);
 
   const filteredNotes = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -159,7 +184,7 @@ export default function HomePage({ user = null }) {
     try {
       // Backend contract: DELETE /api/notes/bulk with JSON { ids: [...] }.
       // Only return 2xx if the requested deletion succeeded.
-      const { data } = await axios.delete(`${API_URL}/api/notes/bulk`, {
+      const { data } = await api.delete("/notes/bulk", {
         data: { ids },
       });
 

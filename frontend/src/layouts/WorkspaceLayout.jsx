@@ -1,19 +1,33 @@
 import { useCallback, useState } from "react";
-import { Outlet } from "react-router";
+import { Outlet, useLocation, useNavigate } from "react-router";
 import { Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import Sidebar from "../components/Sidebar";
+import { logout } from "@/utils/logout";
+import AskPage from "../pages/AskPage";
 
 export default function WorkspaceLayout() {
   const [desktopOpen, setDesktopOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isAskOpen, setIsAskOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isAskPage = location.pathname === "/ask";
   const closeMobile = useCallback(() => setMobileOpen(false), []);
+  const closeAsk = useCallback(() => setIsAskOpen(false), []);
+  const expandAsk = useCallback(() => navigate("/ask"), [navigate]);
+
+  useEffect(() => {
+    if (!isAskPage) setIsAskOpen(false);
+  }, [isAskPage]);
 
   return (
-    <div className="flex min-h-screen w-full bg-base-100">
+    <>
+    <div className="flex min-h-screen w-full bg-base-100" inert={isAskOpen || isAskPage ? "" : undefined}>
       <Sidebar
         desktopOpen={desktopOpen}
         mobileOpen={mobileOpen}
         onMobileClose={closeMobile}
+        onAskOpen={() => setIsAskOpen(true)}
       />
 
       {/* min-w-0 lets the existing notes grid shrink correctly as the sidebar opens. */}
@@ -41,9 +55,20 @@ export default function WorkspaceLayout() {
           >
             <Menu size={20} />
           </button>
-          <span className="text-sm font-medium text-base-content/65">
-            Workspace
-          </span>
+
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-base-content/65">
+              Workspace
+            </span>
+
+            <button
+              type="button"
+              className="btn btn-error btn-sm"
+              onClick={logout}
+            >
+              Logout
+            </button>
+          </div>
         </div>
 
         <div className="min-w-0 flex-1">
@@ -51,5 +76,12 @@ export default function WorkspaceLayout() {
         </div>
       </div>
     </div>
+    <AskPage
+      fullPage={isAskPage}
+      drawerOpen={isAskOpen && !isAskPage}
+      onClose={isAskPage ? () => navigate("/") : closeAsk}
+      onExpand={expandAsk}
+    />
+    </>
   );
 }

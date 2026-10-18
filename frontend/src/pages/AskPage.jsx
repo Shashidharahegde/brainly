@@ -1,4 +1,3 @@
-import axios from "axios";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import {
@@ -8,6 +7,7 @@ import {
   ChevronRight,
   Copy,
   LoaderCircle,
+  Maximize2,
   Menu,
   MessageCircle,
   Plus,
@@ -31,8 +31,8 @@ import {
   PromptInputTextarea,
 } from "../components/ui/prompt-input";
 import { PromptSuggestion } from "../components/ui/prompt-suggestion";
-
-const API_BASE = import.meta.env.VITE_BACKEND;
+import api from "../lib/api";
+import AskNotesDrawer from "../components/AskNotesDrawer";
 
 const SUGGESTIONS = [
   {
@@ -112,7 +112,24 @@ function getAssistantResponse(data) {
   );
 }
 
-function ChatSidebar({ threads, chatId, open, loading, onClose, onNew, onSelect }) {
+function getChatList(data) {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.chats)) return data.chats;
+  return [];
+}
+
+function getChatMessages(data) {
+  const messages = Array.isArray(data?.messages) ? data.messages : [];
+  return messages.map((item) => ({
+    id: String(item._id ?? item.id ?? newId()),
+    role: item.role === "model" ? "assistant" : item.role,
+    content: item.content ?? "",
+    sources: item.sources ?? [],
+    status: "sent",
+  }));
+}
+
+function ChatSidebar({ threads, chatId, open, loading, onClose, onNew, onSelect, drawerMode }) {
   return (
     <>
       {open && (
@@ -120,11 +137,11 @@ function ChatSidebar({ threads, chatId, open, loading, onClose, onNew, onSelect 
           type="button"
           aria-label="Close conversation sidebar"
           onClick={onClose}
-          className="fixed inset-0 z-30 bg-stone-900/35 backdrop-blur-[2px] md:hidden"
+          className={`fixed inset-0 z-30 bg-stone-900/35 backdrop-blur-[2px] ${drawerMode ? "" : "md:hidden"}`}
         />
       )}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-[280px] flex-col border-r border-stone-200 bg-[#f8f7f4] transition-transform duration-200 md:static md:z-auto md:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed inset-y-0 left-0 z-40 flex w-[280px] flex-col border-r border-stone-200 bg-[#f8f7f4] transition-transform duration-200 ${drawerMode ? "" : "md:static md:z-auto md:translate-x-0"} ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
         <div className="flex h-[76px] shrink-0 items-center justify-between px-5">
           <Link to="/" className="flex items-center gap-2.5 text-stone-900">
@@ -156,11 +173,11 @@ function ChatSidebar({ threads, chatId, open, loading, onClose, onNew, onSelect 
 
         <div className="min-h-0 flex-1 overflow-y-auto px-3">
           <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.17em] text-stone-400">
-            This session
+            Conversations
           </p>
           {threads.length === 0 ? (
             <p className="px-3 py-3 text-xs leading-5 text-stone-400">
-              Your conversations will appear here while this page is open.
+              {loading ? "Loading conversations…" : "Your saved conversations will appear here."}
             </p>
           ) : (
             <div className="space-y-1">
@@ -277,54 +294,118 @@ function ChatMessage({ item, onCopy }) {
   );
 }
 
-export default function AskPage() {
-  const [chatId, setChatId] = useState(null);
+export default function AskPage({ fullPage = false, drawerOpen = false, onClose = () => {}, onExpand = () => {} }) {
+  const [chatId, setChatId] = useState(() => localStorage.getItem("active-chat-id"));
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadingChats, setLoadingChats] = useState(true);
+  const [loadingChat, setLoadingChat] = useState(false);
   const [error, setError] = useState(null);
   const [threads, setThreads] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const submittingRef = useRef(false);
+  const chatLoadRef = useRef(0);
 
-  // Sidebar history is only an in-memory display cache. MongoDB is the source of truth.
   useEffect(() => {
-    if (!chatId) return;
-    setThreads((current) => {
-      const index = current.findIndex((thread) => thread.id === chatId);
-      const firstQuestion = messages.find((item) => item.role === "user")?.content;
-      const title = shortTitle(firstQuestion || "New conversation");
-      if (index >= 0) {
-        return current.map((thread) =>
-          thread.id === chatId
-            ? {
-                ...thread,
-                title: thread.title === "New conversation" ? title : thread.title,
-                messages,
-              }
-            : thread
-        );
+    const controller = new AbortController();
+    let active = true;
+
+    async function loadChats() {
+      try {
+        const { data } = await api.get("/chat", { signal: controller.signal });
+        const chats = getChatList(data)
+          .filter((chat) => chat?._id || chat?.id)
+          .map((chat) => ({
+            id: String(chat._id ?? chat.id),
+            title: chat.title || "New conversation",
+          }));
+
+        if (!active) return;
+        setThreads(chats);
+
+        const savedChatId = localStorage.getItem("active-chat-id");
+        const selectedChat = chats.find((chat) => chat.id === savedChatId) || chats[0];
+        if (!selectedChat) {
+          setChatId(null);
+          localStorage.removeItem("active-chat-id");
+          setMessages([]);
+          return;
+        }
+
+        const requestId = ++chatLoadRef.current;
+        setChatId(selectedChat.id);
+        localStorage.setItem("active-chat-id", selectedChat.id);
+        setLoadingChat(true);
+
+        try {
+          const { data: chatData } = await api.get(
+            `/chat/${encodeURIComponent(selectedChat.id)}`,
+            { signal: controller.signal },
+          );
+          if (active && requestId === chatLoadRef.current) {
+            setMessages(getChatMessages(chatData));
+          }
+        } catch (loadError) {
+          if (active && !controller.signal.aborted) {
+            setMessages([]);
+            setError({ message: loadError.response?.data?.message || "Unable to load this conversation." });
+          }
+        } finally {
+          if (active && requestId === chatLoadRef.current) setLoadingChat(false);
+        }
+      } catch (loadError) {
+        if (active && !controller.signal.aborted) {
+          console.error("Unable to load conversations:", loadError);
+          setError({ message: loadError.response?.data?.message || "Unable to load conversations." });
+        }
+      } finally {
+        if (active) setLoadingChats(false);
       }
-      return [{ id: chatId, title, messages }, ...current];
-    });
-  }, [chatId, messages]);
+    }
+
+    loadChats();
+    return () => {
+      active = false;
+      chatLoadRef.current += 1;
+      controller.abort();
+    };
+  }, []);
 
   function newConversation() {
     if (submittingRef.current) return;
+    chatLoadRef.current += 1;
     setChatId(null);
+    localStorage.removeItem("active-chat-id");
     setMessages([]);
     setMessage("");
     setError(null);
+    setLoadingChat(false);
     setSidebarOpen(false);
   }
 
-  function selectConversation(thread) {
-    if (submittingRef.current) return;
+  async function selectConversation(thread) {
+    if (submittingRef.current || loadingChat) return;
+    const requestId = ++chatLoadRef.current;
     setChatId(thread.id);
-    setMessages(thread.messages);
+    localStorage.setItem("active-chat-id", thread.id);
+    setMessages([]);
     setMessage("");
     setError(null);
+    setLoadingChat(true);
     setSidebarOpen(false);
+
+    try {
+      const { data } = await api.get(`/chat/${encodeURIComponent(thread.id)}`);
+      if (requestId === chatLoadRef.current) setMessages(getChatMessages(data));
+    } catch (loadError) {
+      if (requestId === chatLoadRef.current) {
+        console.error("Unable to load conversation:", loadError);
+        setError({ message: loadError.response?.data?.message || "Unable to load this conversation." });
+      }
+    } finally {
+      if (requestId === chatLoadRef.current) setLoadingChat(false);
+    }
   }
 
   async function handleQuery(event, suggestedText) {
@@ -343,15 +424,39 @@ export default function AskPage() {
 
     try {
       if (!currentChatId) {
-        const { data } = await axios.post(`${API_BASE}/api/chat`, {
-          query: query.slice(0, 60),
+        const { data } = await api.post("/chat", {
+          query,
         });
 
         currentChatId = getCreatedChatId(data);
         if (!currentChatId) {
           throw new Error("Chat created, but the API did not return a chat ID.");
         }
+        const reply = getAssistantResponse(data);
+        const title = data?.title || shortTitle(query);
+        const userItem = {
+          id: newId(),
+          role: "user",
+          content: query,
+          status: "sent",
+        };
+        localStorage.setItem("active-chat-id", currentChatId);
         setChatId(currentChatId);
+        setThreads((current) => [
+          { id: currentChatId, title },
+          ...current.filter((thread) => thread.id !== currentChatId),
+        ]);
+        setMessages([
+          userItem,
+          {
+            id: newId(),
+            role: "assistant",
+            content: reply.content,
+            sources: reply.sources,
+          },
+        ]);
+        setMessage("");
+        return;
       }
 
       // The chat now exists, so it is safe to show the user's message.
@@ -366,8 +471,8 @@ export default function AskPage() {
       setMessage("");
 
       // Server loads history itself: do not send local messages/history.
-      const { data } = await axios.post(
-        `${API_BASE}/api/chat/${encodeURIComponent(currentChatId)}/messages`,
+      const { data } = await api.post(
+        `/chat/${encodeURIComponent(currentChatId)}/messages`,
         { query }
       );
 
@@ -383,6 +488,12 @@ export default function AskPage() {
           sources: reply.sources,
         },
       ]);
+      setThreads((current) => {
+        const selected = current.find((thread) => thread.id === currentChatId);
+        return selected
+          ? [selected, ...current.filter((thread) => thread.id !== currentChatId)]
+          : current;
+      });
     } catch (err) {
       console.error(`Chat ${stage} failed:`, err);
       const status = err.response?.status;
@@ -428,16 +539,17 @@ export default function AskPage() {
   const currentThread = threads.find((thread) => thread.id === chatId);
   const currentTitle = currentThread?.title || shortTitle(messages.find((item) => item.role === "user")?.content || "Ask your notes");
 
-  return (
-    <div className="flex h-[100dvh] min-h-[480px] w-full overflow-hidden bg-[#fdfcfb] text-stone-900 antialiased">
+  const chat = (
+    <div className={`flex w-full overflow-hidden bg-[#fdfcfb] text-stone-900 antialiased ${fullPage ? "h-[100dvh] min-h-[480px]" : "h-full min-h-0"}`}>
       <ChatSidebar
         threads={threads}
         chatId={chatId}
         open={sidebarOpen}
-        loading={loading}
+        loading={loading || loadingChat || loadingChats}
         onClose={() => setSidebarOpen(false)}
         onNew={newConversation}
         onSelect={selectConversation}
+        drawerMode={!fullPage}
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -469,17 +581,31 @@ export default function AskPage() {
             <button
               type="button"
               onClick={newConversation}
-              disabled={loading}
+              disabled={loading || loadingChat || loadingChats}
               className="inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-white px-3 py-2 text-xs font-medium shadow-sm transition-colors hover:bg-stone-50 disabled:opacity-50"
             >
               <Plus size={15} /> <span className="hidden sm:inline">New chat</span>
             </button>
+            {!fullPage && (
+              <>
+                <button type="button" onClick={onExpand} aria-label="Open chat full screen" title="Open full screen" className="rounded-full border border-stone-200 bg-white p-2 text-stone-600 hover:bg-stone-50">
+                  <Maximize2 size={15} />
+                </button>
+                <button type="button" data-ask-drawer-close onClick={onClose} aria-label="Close chat" className="rounded-full border border-stone-200 bg-white p-2 text-stone-600 hover:bg-stone-50">
+                  <X size={15} />
+                </button>
+              </>
+            )}
           </div>
         </header>
 
         <ChatContainerRoot className="min-h-0 flex-1">
           <ChatContainerContent className="mx-auto flex w-full max-w-[860px] flex-col gap-7 px-4 pb-8 pt-8 sm:px-8 sm:pt-12">
-            {messages.length === 0 ? (
+            {loadingChats || loadingChat ? (
+              <div className="flex min-h-[min(58vh,540px)] items-center justify-center gap-3 text-sm text-stone-500" role="status">
+                <LoaderCircle size={17} className="animate-spin" /> Loading conversation…
+              </div>
+            ) : messages.length === 0 ? (
               <div className="flex min-h-[min(58vh,540px)] flex-col items-center justify-center py-10 text-center">
                 <div className="mb-7 grid size-[70px] place-items-center rounded-[24px] border border-stone-200 bg-white shadow-[0_12px_35px_rgba(68,57,45,0.07)]">
                   <Sparkles size={29} strokeWidth={1.6} className="text-stone-700" />
@@ -495,7 +621,7 @@ export default function AskPage() {
                   {SUGGESTIONS.map((item) => (
                     <PromptSuggestion
                       key={item.label}
-                      disabled={loading}
+                      disabled={loading || loadingChat || loadingChats}
                       onClick={() => handleQuery(null, item.prompt)}
                       className="!justify-between !rounded-xl !border !border-stone-200 !bg-white !px-4 !py-3 !text-left !text-[13px] !text-stone-700 shadow-sm transition-all hover:!-translate-y-0.5 hover:!border-stone-300 hover:!bg-stone-50 motion-reduce:transform-none"
                     >
@@ -531,7 +657,7 @@ export default function AskPage() {
               value={message}
               onValueChange={setMessage}
               onSubmit={handleQuery}
-              disabled={loading}
+              disabled={loading || loadingChat || loadingChats}
               isLoading={loading}
               maxHeight={200}
               className="!rounded-[22px] !border !border-stone-200 !bg-white !p-2 shadow-[0_8px_32px_rgba(34,30,26,0.06)] focus-within:!border-stone-400"
@@ -545,7 +671,7 @@ export default function AskPage() {
                 <button
                   type="button"
                   onClick={handleQuery}
-                  disabled={loading || !message.trim()}
+                  disabled={loading || loadingChat || loadingChats || !message.trim()}
                   aria-label="Send message"
                   className="grid size-9 shrink-0 place-items-center rounded-full bg-stone-900 text-white transition-all enabled:hover:-translate-y-0.5 enabled:hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-35 motion-reduce:transform-none"
                 >
@@ -560,6 +686,14 @@ export default function AskPage() {
         </div>
       </div>
     </div>
+  );
+
+  if (fullPage) return chat;
+
+  return (
+    <AskNotesDrawer open={drawerOpen} onClose={onClose}>
+      {chat}
+    </AskNotesDrawer>
   );
 }
 

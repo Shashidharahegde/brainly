@@ -5,14 +5,14 @@ import { removePdfFile } from "../../utils/pdfFiles.js"
 export async function deleteNote (req, res) {
     try {
         const id  = req.params.id
-        const note = await Note.findByIdAndDelete(id)
+        const note = await Note.findOneAndDelete({ _id: id, ownerId: req.user.userId })
         if (!note){
             return res.status(404).json({
                 msg: "Note not found!"
             })
         }
         await Promise.all([
-            NoteChunk.deleteMany({ noteId: note._id }),
+            NoteChunk.deleteMany({ noteId: note._id, ownerId: req.user.userId }),
             removePdfFile(note.pdf?.filename),
             ...(note.obsoletePdfFilenames ?? []).map((filename) => removePdfFile(filename)),
         ])
@@ -32,15 +32,15 @@ export async function deleteNotes(req, res) {
             return res.status(400).json({ message: "Provide note IDs to delete." })
         }
 
-        const notes = await Note.find({ _id: { $in: ids } })
+        const notes = await Note.find({ _id: { $in: ids }, ownerId: req.user.userId })
         if (notes.length === 0) {
             return res.status(404).json({ message: "No notes found." })
         }
 
         const noteIds = notes.map((note) => note._id)
-        await Note.deleteMany({ _id: { $in: noteIds } })
+        await Note.deleteMany({ _id: { $in: noteIds }, ownerId: req.user.userId })
         await Promise.all([
-            NoteChunk.deleteMany({ noteId: { $in: noteIds } }),
+            NoteChunk.deleteMany({ noteId: { $in: noteIds }, ownerId: req.user.userId }),
             ...notes.flatMap((note) => [
                 removePdfFile(note.pdf?.filename),
                 ...(note.obsoletePdfFilenames ?? []).map((filename) => removePdfFile(filename)),

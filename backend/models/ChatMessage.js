@@ -3,6 +3,12 @@ import mongoose from "mongoose";
 
 const chatMessageSchema = new mongoose.Schema(
   {
+    ownerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
     chatId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Chat",
@@ -37,7 +43,7 @@ const chatMessageSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-chatMessageSchema.index({ chatId: 1, createdAt: 1 });
+chatMessageSchema.index({ ownerId: 1, chatId: 1, createdAt: 1 });
 
 const ChatMessage = mongoose.model(
   "ChatMessage",
