@@ -22,25 +22,17 @@ export default function AskNotesDrawer({ open, onClose, children }) {
   }, [open, onClose]);
 
   return (
-    <div className={`fixed inset-0 z-[60] transition-[visibility] duration-300 ${open ? "visible" : "invisible pointer-events-none"}`}>
-      <button
-        type="button"
-        aria-label="Close Ask Your Notes"
-        tabIndex={open ? 0 : -1}
-        onClick={onClose}
-        className={`absolute inset-0 bg-black/30 transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0"}`}
-      />
-      <aside
-        ref={drawerRef}
-        role="dialog"
-        aria-modal={open}
-        aria-label="Ask Your Notes"
-        aria-hidden={!open}
-        inert={!open ? "" : undefined}
-        className={`absolute inset-y-0 right-0 w-full max-w-[520px] bg-white shadow-2xl transition-transform duration-300 ease-in-out sm:w-[min(92vw,520px)] ${open ? "translate-x-0" : "translate-x-full"}`}
-      >
+    <aside
+      ref={drawerRef}
+      aria-label="Ask Your Notes"
+      aria-hidden={!open}
+      inert={!open ? "" : undefined}
+      style={{ width: open ? "min(92vw, 520px)" : "0px" }}
+      className={`sticky top-0 h-[calc(100dvh-3.5rem)] min-w-0 shrink-0 overflow-hidden border-l bg-white transition-[width] duration-300 ease-in-out ${open ? "border-stone-200" : "border-transparent"}`}
+    >
+      <div className="h-full w-[min(92vw,520px)] max-w-[520px]">
         {children}
-      </aside>
-    </div>
+      </div>
+    </aside>
   );
 }

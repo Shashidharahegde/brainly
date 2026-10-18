@@ -27,7 +27,7 @@ function SidebarContent({ onNavigate, onAskOpen }) {
   return (
     <nav className="space-y-2 px-3 py-5" aria-label="Main navigation">
       {links.map(({ to, end, label, description, icon: Icon }) => (
-        {to === "/ask" ? (
+        to === "/ask" ? (
           <button
           key={to}
           type="button"
@@ -77,7 +77,7 @@ function SidebarContent({ onNavigate, onAskOpen }) {
               {description}
             </span>
           </span>
-        </NavLink>}
+        </NavLink>
       ))}
     </nav>
   );

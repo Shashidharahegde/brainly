@@ -540,8 +540,8 @@ export default function AskPage({ fullPage = false, drawerOpen = false, onClose 
   const currentTitle = currentThread?.title || shortTitle(messages.find((item) => item.role === "user")?.content || "Ask your notes");
 
   const chat = (
-    <div className={`flex w-full overflow-hidden bg-[#fdfcfb] text-stone-900 antialiased ${fullPage ? "h-[100dvh] min-h-[480px]" : "h-full min-h-0"}`}>
-      <ChatSidebar
+    <div className={`flex w-full overflow-hidden bg-[#fdfcfb] text-stone-900 antialiased ${fullPage ? "h-[calc(100dvh-3.5rem)] min-h-[480px]" : "h-full min-h-0"}`}>
+      {fullPage && <ChatSidebar
         threads={threads}
         chatId={chatId}
         open={sidebarOpen}
@@ -550,19 +550,19 @@ export default function AskPage({ fullPage = false, drawerOpen = false, onClose 
         onNew={newConversation}
         onSelect={selectConversation}
         drawerMode={!fullPage}
-      />
+      />}
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-[76px] shrink-0 items-center justify-between border-b border-stone-100 bg-white/80 px-4 backdrop-blur-md sm:px-7">
           <div className="flex min-w-0 items-center gap-3">
-            <button
+            {fullPage && <button
               type="button"
               onClick={() => setSidebarOpen(true)}
               className="rounded-lg p-2 text-stone-600 hover:bg-stone-100 md:hidden"
               aria-label="Open conversations"
             >
               <Menu size={19} />
-            </button>
+            </button>}
             <div className="min-w-0">
               <div className="truncate text-sm font-semibold tracking-tight">{currentTitle}</div>
               <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-stone-500">
@@ -574,6 +574,7 @@ export default function AskPage({ fullPage = false, drawerOpen = false, onClose 
           <div className="flex items-center gap-2">
             <Link
               to="/"
+              onClick={fullPage ? onClose : undefined}
               className="hidden items-center gap-1.5 rounded-full border border-stone-200 px-3 py-2 text-xs font-medium text-stone-600 transition-colors hover:bg-stone-50 sm:flex"
             >
               <ArrowLeft size={14} /> All notes
@@ -688,7 +689,7 @@ export default function AskPage({ fullPage = false, drawerOpen = false, onClose 
     </div>
   );
 
-  if (fullPage) return chat;
+  if (fullPage) return  chat;
 
   return (
     <AskNotesDrawer open={drawerOpen} onClose={onClose}>

@@ -16,13 +16,14 @@ export default function WorkspaceLayout() {
   const closeAsk = useCallback(() => setIsAskOpen(false), []);
   const expandAsk = useCallback(() => navigate("/ask"), [navigate]);
 
-  useEffect(() => {
+  const closeFullAsk = useCallback(() => {
     if (!isAskPage) setIsAskOpen(false);
+    navigate("/");
   }, [isAskPage]);
 
   return (
-    <>
-    <div className="flex min-h-screen w-full bg-base-100" inert={isAskOpen || isAskPage ? "" : undefined}>
+    <div className="flex min-h-screen w-full bg-base-100">
+    <div className="flex min-w-0 flex-1">
       <Sidebar
         desktopOpen={desktopOpen}
         mobileOpen={mobileOpen}
@@ -71,17 +72,19 @@ export default function WorkspaceLayout() {
           </div>
         </div>
 
-        <div className="min-w-0 flex-1">
-          <Outlet />
+        <div className="flex min-h-[calc(100dvh-3.5rem)] min-w-0 flex-1">
+          <div className={`min-w-0 flex-1 ${isAskPage ? "hidden" : ""}`}>
+            <Outlet />
+          </div>
+          <AskPage
+            fullPage={isAskPage}
+            drawerOpen={isAskOpen && !isAskPage}
+            onClose={isAskPage ? closeFullAsk : closeAsk}
+            onExpand={expandAsk}
+          />
         </div>
       </div>
     </div>
-    <AskPage
-      fullPage={isAskPage}
-      drawerOpen={isAskOpen && !isAskPage}
-      onClose={isAskPage ? () => navigate("/") : closeAsk}
-      onExpand={expandAsk}
-    />
-    </>
+    </div>
   );
 }
