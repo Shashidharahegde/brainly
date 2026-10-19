@@ -1,66 +1,48 @@
+<div align="center">
+
+<img src="frontend/public/Mascot.svg" alt="Brainly mascot" width="96" />
+
 # Brainly
 
-**Your personal knowledge base, powered by AI.**
+### Your thoughts, connected.
 
-Brainly is an AI-powered personal knowledge management application that helps you capture information, organize resources, and interact with your knowledge through natural language.
+Capture anything. Organize effortlessly. Find meaning in your own thoughts.
 
-Built with **Retrieval-Augmented Generation (RAG)**, Brainly combines semantic search, vector embeddings, and large language models to turn scattered information into accessible, contextual knowledge.
+**An AI-powered personal knowledge base built around your notes, resources, and ideas.**
 
-**Project Status:** Active Development | Not Yet Deployed
+React · Express · MongoDB Atlas · Gemini · BullMQ
+
+**Status:** Active development · Not deployed yet
+
+</div>
 
 ---
 
-## Overview
-
-Information is easy to collect but difficult to retrieve when it matters.
-
-Brainly addresses this challenge by providing a centralized workspace for managing personal knowledge. Users can save notes, organize external resources, and ask questions directly against their own content.
-
-Unlike traditional search systems that rely primarily on keyword matching, Brainly uses semantic retrieval to identify relevant information based on meaning and context. Retrieved content is then provided to a language model to generate grounded, context-aware responses.
-
-The goal is simple: **make personal knowledge easier to organize, retrieve, and use.**
-
-
-
-
-<h2 align="center">Application Preview</h2>
-
 <p align="center">
-  A glimpse into Brainly — your personal space to capture,
-  organize, and explore knowledge with AI.
+  <a href="#overview">Overview</a> ·
+  <a href="#features">Features</a> ·
+  <a href="#architecture">Architecture</a> ·
+  <a href="#technology">Technology</a> ·
+  <a href="#getting-started">Getting started</a> ·
+  <a href="#roadmap">Roadmap</a>
 </p>
 
-<table>
-  <tr>
-    <td width="50%" align="center">
-      <img src="docs/snapshots/Pastel%20AI%20Notes%20App%20Walkthrough.png" alt="Brainly Knowledge Dashboard" width="100%" />
-      <br />
-      <b>Knowledge Dashboard</b>
-    </td>
-    <td width="50%" align="center">
-      <img src="docs/snapshots/Brainly%20Notes%20AI%20Walkthrough.png" alt="Brainly AI Workspace" width="100%" />
-      <br />
-      <b>Notes & AI Workspace</b>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center">
-      <img src="docs/snapshots/Learning%20to%20Sketch%20Note%20Modal.png" alt="Brainly Note Editor" width="100%" />
-      <br />
-      <b>Note Creation</b>
-    </td>
-    <td width="50%" align="center">
-      <img src="docs/snapshots/Playful%20Notes%20App%20Welcome%20Modal.png" alt="Brainly Welcome Modal" width="100%" />
-      <br />
-      <b>Welcome Experience</b>
-    </td>
-  </tr>
-</table>
+## Overview
 
+Brainly is a personal knowledge management application that makes saved information useful, not just searchable. Keep your notes and external resources in one workspace, then explore them through natural-language questions.
 
+Under the hood, Brainly uses **Retrieval-Augmented Generation (RAG)**: it finds relevant information in your own knowledge base and supplies that context to Google Gemini when generating a response. Instead of searching every note manually, you can ask about the ideas you've collected.
+
+<p align="center">
+  <img src="docs/snapshots/Pastel%20AI%20Notes%20App%20Walkthrough.png" alt="Brainly dashboard showing the personal notes workspace" width="920" />
+</p>
+<p align="center"><sub>The knowledge workspace — a place to collect, organize, and revisit ideas.</sub></p>
 
 ## Features
 
+| Organize | Discover | Ask |
+| :--- | :--- | :--- |
+| Save notes and supported external resources, with tags and metadata. | Retrieve relevant content by meaning using embeddings and vector search. | Ask questions grounded in your indexed content, with conversation history. |
 ### Knowledge Management
 
 - Create, edit, organize, and manage personal notes.
@@ -96,26 +78,31 @@ The goal is simple: **make personal knowledge easier to organize, retrieve, and 
 - Associate notes, chunks, chats, and messages with authenticated users.
 - Enforce ownership checks at the backend to isolate user data.
 
-**Note:** Resource support depends on the extraction processor implemented for each media type. Saving a resource does not necessarily guarantee that its entire content can be extracted or indexed.
 
----
+Brainly also supports asynchronous content indexing, processing-status feedback, persistent chat sessions, JWT authentication, and backend-enforced user data isolation.
 
-## Tech Stack
+### Capture what matters
 
-| Layer | Technologies | Purpose |
-|---|---|---|
-| Frontend | React, Vite | User interface and client-side application |
-| Backend | Node.js, Express | REST APIs and application logic |
-| Database | MongoDB, Mongoose | Persistent storage and data modeling |
-| Authentication | JWT | Authentication and protected resource access |
-| Job Queue | BullMQ, Redis | Asynchronous task management |
-| Embeddings | Google Gemini Embeddings | Vector representation of content |
-| LLM | Google Gemini | Context-aware response generation |
-| Vector Database | MongoDB Atlas Vector Search | Semantic similarity search |
+Create notes, group information with tags, and save resources such as text, PDFs, images, audio/video, websites, and YouTube links. Supported content is processed in the background, keeping note creation separate from extraction and embedding work.
 
-## System Architecture
+<p align="center">
+  <img src="docs/snapshots/Learning%20to%20Sketch%20Note%20Modal.png" alt="Brainly note editor showing a note titled Learning to Sketch" width="790" />
+</p>
+<p align="center"><sub>Note creation — capture an idea now and return to it later.</sub></p>
 
-Brainly separates user-facing API operations from resource-intensive content processing and AI retrieval workflows.
+> **Content processing:** Being able to save a source does not guarantee that all of its media can be extracted or indexed. Extraction depends on the configured processor for each source type.
+
+### Find information by meaning
+
+Brainly splits extracted text into searchable chunks, generates Gemini embeddings, and stores the chunks with source references in MongoDB. MongoDB Atlas Vector Search retrieves content that is semantically related to your question, even when the wording differs from the original note.
+
+### Continue the conversation
+
+Ask questions across your authorized knowledge base. Brainly combines retrieved chunks, relevant source metadata, and a bounded window of recent chat history to give Gemini the context needed for a response. Chats and messages are saved so you can return to them later.
+
+## Architecture
+
+Brainly separates the interactive API from background ingestion and connects both to a shared data layer.
 
 ```mermaid
 flowchart TD
@@ -167,17 +154,33 @@ This workflow combines semantic retrieval with conversational generation, allowi
 
 ---
 
-## Data Models
+<p align="center">
+  <img src="docs/snapshots/Brainly%20Notes%20AI%20Walkthrough.png" alt="Brainly notes and AI workspace" width="920" />
+</p>
+<p align="center"><sub>Ask Your Notes — explore saved knowledge through natural-language conversation.</sub></p>
 
-Brainly uses MongoDB with Mongoose to manage application data.
+## Technology
 
-| Model | Description |
-|---|---|
-| `User` | User accounts and identity |
-| `Note` | Saved content, metadata, tags, ownership, and processing status |
-| `NoteChunk` | Extracted text segments, embeddings, and parent-note references |
-| `Chat` | Conversation metadata and ownership |
-| `ChatMessage` | Individual messages, roles, timestamps, and chat references |
+| Layer | Technology | Responsibility |
+| :--- | :--- | :--- |
+| Frontend | React, Vite | Notes, search, chat, and processing-status interface |
+| API | Node.js, Express | Authentication, resource handling, and RAG orchestration |
+| Database | MongoDB, Mongoose | Users, notes, conversations, chunks, and embeddings |
+| Authentication | JSON Web Tokens (JWT) | Authenticated requests and user-scoped authorization |
+| Background processing | BullMQ, Redis | Asynchronous ingestion jobs |
+| Embeddings | Google Gemini Embeddings | Vector representations of text chunks |
+| Retrieval | MongoDB Atlas Vector Search | Semantic similarity search |
+| Generation | Google Gemini | Answers generated from retrieved context |
+
+### Data model
+
+The core entities are `User`, `Note`, `NoteChunk`, `Chat`, and `ChatMessage`.
+
+- **User:** Account identity.
+- **Note:** Saved content, tags, source metadata, owner, and processing state.
+- **NoteChunk:** Extracted text, embedding, chunk index, and parent-note reference.
+- **Chat:** Conversation metadata and owner.
+- **ChatMessage:** Message role, content, timestamp, and parent-chat reference.
 
 ### Data Isolation
 
@@ -187,162 +190,120 @@ Authenticated user identity is derived from verified JWT claims rather than clie
 
 ---
 
-## Getting Started
+
+## Getting started
+
+These instructions reflect the documented React/Vite frontend and `backend/` API layout. Check your actual `package.json` scripts and worker entry point if your project structure differs.
 
 ### Prerequisites
 
-Ensure the following services and dependencies are available:
-
 - Node.js and npm
-- MongoDB Atlas or a compatible MongoDB instance
-- Redis
+- MongoDB (MongoDB Atlas with a configured Vector Search index for semantic retrieval)
+- Redis for BullMQ workers
 - Google Gemini API key
-- MongoDB Atlas Vector Search index for semantic retrieval
+- Google OAuth configuration for sign-in
 
-### 1. Clone the Repository
-
-```bash
-git clone <repository-url>
-cd <repository-directory>
-```
-
-### 2. Install Frontend Dependencies
-
-From the project root:
+### 1. Clone and install
 
 ```bash
+git clone <your-repository-url>
+cd <your-repository-directory>
+
+# Frontend (repository root)
 npm install
-```
 
-If required by the frontend configuration, create a `.env` file and configure the appropriate Vite environment variables.
-
-Only non-sensitive configuration should be exposed through `VITE_`-prefixed variables.
-
-### 3. Configure the Backend
-
-Navigate to the backend directory and install dependencies:
-
-```bash
+# Backend
 cd backend
 npm install
 ```
 
-Create a `.env` file inside the `backend` directory.
+### 2. Configure environment variables
 
-Example configuration:
+Create `backend/.env` using the variable names expected by your backend. For example:
 
-```env
+```dotenv
 PORT=5000
 MONGODB_URI=your_mongodb_connection_string
-JWT_SECRET=your_secure_jwt_secret
+JWT_SECRET=replace_with_a_long_random_secret
 GEMINI_API_KEY=your_gemini_api_key
-
 REDIS_HOST=127.0.0.1
 REDIS_PORT=6379
-
 CLIENT_URL=http://localhost:5173
 ```
 
-These variable names are illustrative. Refer to the backend configuration for the exact environment variables required by the application.
+For the React/Vite frontend, configure the backend URL in the environment file read by your app (for example, `.env` at the repository root):
 
-Never commit API keys, credentials, or environment files containing secrets.
+```dotenv
+VITE_BACKEND=http://localhost:5000
+```
 
-### 4. Start Redis
+Configure any additional Google OAuth client settings required by your project. Never place backend secrets in `VITE_` variables or commit `.env` files.
 
-Start the Redis service using your preferred installation method.
+### 3. Start the services
 
-Ensure the service is accessible using the host and port configured in your backend environment.
+Start Redis locally, then open separate terminals for the API, worker, and frontend:
 
-### 5. Start the Backend Server
-
-From the `backend` directory:
+**API — from `backend/`:**
 
 ```bash
 npm run dev
 ```
 
-This assumes a `dev` script is defined in `backend/package.json`.
-
-### 6. Start the Background Worker
-
-Open a separate terminal and run:
+**Worker — from `backend/` (example entry point):**
 
 ```bash
-cd backend
 node src/workers/noteWorker.js
 ```
 
-The background worker must have access to the relevant MongoDB, Redis, and Gemini configuration.
-
-Its entry point may differ depending on the project structure.
-
-### 7. Start the Frontend
-
-From the project root:
+**Frontend — from the repository root:**
 
 ```bash
 npm run dev
 ```
 
-Open the local development URL provided by Vite.
+Ensure your MongoDB Atlas Vector Search index matches the embedding field and model dimensions configured by the backend. Your API and worker both need access to MongoDB, Redis, and Gemini as appropriate.
 
-**Important:** Verify the scripts in each `package.json` and adjust the commands according to your actual project structure.
+### First-time experience
 
----
+The welcome flow introduces the three main actions: creating notes, saving links, and asking questions about saved knowledge.
 
-## Security Considerations
+<p align="center">
+  <img src="docs/snapshots/Playful%20Notes%20App%20Welcome%20Modal.png" alt="Brainly first-time welcome modal introducing notes, links, and AI chat" width="820" />
+</p>
+<p align="center"><sub>A quick introduction before building your personal knowledge base.</sub></p>
 
-Brainly handles user-owned information and AI-generated content, making secure data access an important architectural requirement.
+## Security considerations
 
-Key considerations include:
-
-- **Authentication:** Require valid JWTs for protected endpoints.
-- **Authorization:** Enforce resource ownership at the API and database layers.
-- **Secret management:** Store API keys and credentials in server-side environment variables.
-- **Data isolation:** Apply user-specific filters during note, conversation, and vector retrieval operations.
-- **File access:** Restrict access to uploaded files and private source materials.
-- **Input validation:** Validate incoming requests before processing or persistence.
-- **Prompt safety:** Treat retrieved documents and external content as untrusted data when constructing model prompts.
-
----
+- Keep credentials, tokens, and API keys in server-side configuration.
+- Authenticate protected endpoints and derive identity from verified JWT claims.
+- Apply ownership filters to notes, chunks, chats, and messages, including vector retrieval.
+- Control access to private uploads and source material.
+- Validate requests and treat retrieved or externally supplied content as untrusted when constructing prompts.
 
 ## Roadmap
 
-Brainly is under active development. Planned improvements include:
+- [ ] Improve ingestion reliability, retries, and recovery from failed jobs.
+- [ ] Evaluate retrieval quality, chunking, and relevance thresholds.
+- [ ] Improve citations and source attribution in generated answers.
+- [ ] Add stronger tests for multi-turn RAG conversations.
+- [ ] Introduce usage limits and API cost monitoring.
+- [ ] Add production deployment and operational monitoring.
+- [ ] Explore knowledge graphs, cross-note connections, and knowledge reports.
 
-- [ ] Improve ingestion reliability, retries, and error handling.
-- [ ] Optimize chunking strategies and semantic retrieval quality.
-- [ ] Improve source attribution and references in AI-generated responses.
-- [ ] Expand automated testing for retrieval and multi-turn conversations.
-- [ ] Introduce API usage limits and AI cost monitoring.
-- [ ] Improve monitoring and observability for background workers.
-- [ ] Prepare the application for production deployment.
-- [ ] Explore knowledge graphs and relationships between notes.
-- [ ] Investigate AI-generated knowledge summaries and personal insights.
-
-Roadmap items represent planned or exploratory work and are subject to change.
-
----
+Roadmap items are planned or exploratory, not promises of currently available functionality.
 
 ## Contributing
 
-Contributions, suggestions, and bug reports are welcome.
-
-If you would like to contribute:
-
-1. Open an issue to discuss a proposed feature or bug fix.
-2. Create a branch for your changes.
-3. Implement and test your changes.
-4. Submit a pull request explaining the implementation and any relevant testing.
-
-Please avoid including secrets, credentials, or private user information in issues and pull requests.
+Issues, suggestions, and bug reports are welcome while Brainly is under active development. For pull requests, describe your change, include relevant testing notes, and do not commit secrets or user data.
 
 ## License
 
-A license has not yet been specified for this project.
-
-Until a license is added, no general permission to use, modify, or redistribute the source code is granted.
+A license has not yet been specified. Until one is added, no general permission to reuse, modify, or redistribute the source code is granted.
 
 ---
 
+<div align="center">
+
 **Brainly — Turn information into knowledge.**
+
+</div>
