@@ -22,6 +22,7 @@ The goal is simple: **make personal knowledge easier to organize, retrieve, and 
 
 
 
+
 <h2 align="center">Application Preview</h2>
 
 <p align="center">
@@ -32,29 +33,30 @@ The goal is simple: **make personal knowledge easier to organize, retrieve, and 
 <table>
   <tr>
     <td width="50%" align="center">
-      <img src="docs/screenshots/Pastel%20AI%20Notes%20App%20Walkthrough.png" alt="Brainly Knowledge Dashboard" width="100%" />
+      <img src="docs/snapshots/Pastel%20AI%20Notes%20App%20Walkthrough.png" alt="Brainly Knowledge Dashboard" width="100%" />
       <br />
       <b>Knowledge Dashboard</b>
     </td>
     <td width="50%" align="center">
-      <img src="docs/screenshots/Brainly%20Notes%20AI%20Walkthrough.png" alt="Brainly AI Workspace" width="100%" />
+      <img src="docs/snapshots/Brainly%20Notes%20AI%20Walkthrough.png" alt="Brainly AI Workspace" width="100%" />
       <br />
       <b>Notes & AI Workspace</b>
     </td>
   </tr>
   <tr>
     <td width="50%" align="center">
-      <img src="docs/screenshots/Learning%20to%20Sketch%20Note%20Modal.png" alt="Brainly Note Editor" width="100%" />
+      <img src="docs/snapshots/Learning%20to%20Sketch%20Note%20Modal.png" alt="Brainly Note Editor" width="100%" />
       <br />
       <b>Note Creation</b>
     </td>
     <td width="50%" align="center">
-      <img src="docs/screenshots/Playful%20Notes%20App%20Welcome%20Modal.png" alt="Brainly Welcome Modal" width="100%" />
+      <img src="docs/snapshots/Playful%20Notes%20App%20Welcome%20Modal.png" alt="Brainly Welcome Modal" width="100%" />
       <br />
       <b>Welcome Experience</b>
     </td>
   </tr>
 </table>
+
 
 
 ## Features
