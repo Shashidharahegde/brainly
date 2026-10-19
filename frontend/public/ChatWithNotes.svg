@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 320" role="img" aria-labelledby="title desc">
+  <title id="title">Chat with your notes</title>
+  <desc id="desc">A conversation with an AI helper uses the notes you have saved.</desc>
+  <defs><filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="5" stdDeviation="4.5" flood-color="#28222e" flood-opacity=".11"/></filter></defs>
+  <path d="M34 73 C49 34 101 29 156 39 C215 19 266 35 304 40 C362 24 429 35 469 72 C491 94 482 130 485 164 C493 208 481 260 430 282 C371 301 314 286 258 293 C190 300 129 289 81 279 C33 269 20 236 34 197 C18 157 18 108 34 73Z" fill="#F9DDF5" opacity=".9"/>
+  <path d="M47 284 C103 294 159 286 211 294 M58 294 C115 300 153 294 193 299" fill="none" stroke="#F29BEA" stroke-width="4.5" stroke-linecap="round" opacity=".8"/>
+  <path d="M86 45 l-10 -14 M103 42 l3 -20 M121 48 l13 -11 M440 53 l10 -13 M455 63 l15 -4" stroke="#D967E0" stroke-width="4.5" stroke-linecap="round"/>
+  <!-- question bubble -->
+  <g filter="url(#shadow)">
+    <path d="M205 44 H420 C438 44 449 55 449 73 V111 C449 129 438 140 420 140 H289 L263 159 L268 140 H205 C187 140 176 129 176 111 V73 C176 55 187 44 205 44Z" fill="#FFFFFF" stroke="#17191E" stroke-width="3.5"/>
+    <circle cx="206" cy="92" r="17" fill="#DCC5FF"/>
+    <circle cx="206" cy="86" r="6" fill="none" stroke="#17191E" stroke-width="2.5"/>
+    <path d="M194 104 q12 -16 24 0" fill="none" stroke="#17191E" stroke-width="2.5" stroke-linecap="round"/>
+    <rect x="235" y="77" width="181" height="8" rx="4" fill="#D2D4D9"/>
+    <rect x="235" y="94" width="148" height="8" rx="4" fill="#E3E4E7"/>
+    <rect x="235" y="111" width="164" height="8" rx="4" fill="#E3E4E7"/>
+  </g>
+  <!-- answer bubble -->
+  <g filter="url(#shadow)">
+    <path d="M97 153 H333 C352 153 364 165 364 183 V235 C364 253 352 265 333 265 H161 L132 286 L139 265 H97 C78 265 67 253 67 235 V183 C67 165 78 153 97 153Z" fill="#FFFFFF" stroke="#17191E" stroke-width="3.5"/>
+    <rect x="84" y="171" width="65" height="65" rx="19" fill="#FFF06A"/>
+    <!-- tiny blue cloud mascot -->
+    <path d="M99 207 C88 206 87 193 96 188 C96 176 110 171 119 180 C130 177 141 186 138 196 C147 207 137 218 128 217 C122 227 105 226 101 217 C95 216 94 211 99 207Z" fill="#58D0F3" stroke="#17191E" stroke-width="2.7" stroke-linejoin="round"/>
+    <ellipse cx="108" cy="197" rx="4.5" ry="6.3" fill="#FFFFFF" stroke="#17191E" stroke-width="1.7"/><ellipse cx="125" cy="197" rx="4.5" ry="6.3" fill="#FFFFFF" stroke="#17191E" stroke-width="1.7"/>
+    <circle cx="109" cy="198" r="2.4" fill="#17191E"/><circle cx="126" cy="198" r="2.4" fill="#17191E"/>
+    <path d="M109 207 Q117 217 126 207" fill="#F77CCB" stroke="#17191E" stroke-width="2.3" stroke-linecap="round"/>
+    <path d="M91 190 l-5 -4 M142 190 l5 -4 M114 174 l0 -5" stroke="#17191E" stroke-width="2.2" stroke-linecap="round"/>
+    <rect x="165" y="178" width="167" height="9" rx="4.5" fill="#D0D2D7"/>
+    <rect x="165" y="198" width="151" height="8" rx="4" fill="#E0E2E6"/>
+    <rect x="165" y="216" width="133" height="8" rx="4" fill="#E0E2E6"/>
+    <rect x="165" y="234" width="98" height="8" rx="4" fill="#E0E2E6"/>
+  </g>
+  <!-- sparkle marks -->
+  <path d="M401 170 l4 -13 M414 181 l12 -6 M398 187 l-10 -5" stroke="#BD53D8" stroke-width="4" stroke-linecap="round"/>
+  <path d="M402 273 l0 13 M395 280 h14" stroke="#BD53D8" stroke-width="3.5" stroke-linecap="round"/>
+</svg>

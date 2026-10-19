@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 320" role="img" aria-labelledby="title desc">
+  <title id="title">Paste links</title>
+  <desc id="desc">A pasted video link automatically becomes a collection of useful previews.</desc>
+  <defs><filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="5" stdDeviation="4.5" flood-color="#29252b" flood-opacity=".12"/></filter></defs>
+  <path d="M39 66 C45 29 100 30 149 39 C199 19 252 30 292 40 C356 22 423 39 463 70 C493 95 479 133 485 168 C496 217 467 275 416 286 C359 298 316 286 264 292 C192 301 130 287 87 279 C39 272 24 235 35 195 C18 152 16 104 39 66Z" fill="#D9F4FF" opacity=".9"/>
+  <path d="M41 279 C109 289 178 283 223 291 M59 289 C121 295 163 291 206 297" stroke="#80DAFF" stroke-width="4.5" stroke-linecap="round" opacity=".8"/>
+  <path d="M85 49 l-10 -14 M101 44 l4 -18 M117 49 l13 -12 M430 67 l10 -14 M447 74 l17 -5" fill="none" stroke="#35AEE8" stroke-width="4.5" stroke-linecap="round"/>
+  <!-- URL pill -->
+  <g filter="url(#shadow)">
+    <rect x="87" y="47" width="345" height="64" rx="23" fill="#FFFFFF" stroke="#17191E" stroke-width="3.5"/>
+    <rect x="104" y="61" width="35" height="35" rx="10" fill="#FF3737"/>
+    <path d="M117 69 l0 19 15 -9.5z" fill="#FFFFFF"/>
+    <text x="153" y="86" font-family="Arial, sans-serif" font-size="18" fill="#25252A">https://youtu.be/…</text>
+  </g>
+  <!-- article preview -->
+  <g filter="url(#shadow)" transform="rotate(-7 159 196)">
+    <rect x="58" y="133" width="174" height="135" rx="16" fill="#FFFFFF" stroke="#17191E" stroke-width="3.5"/>
+    <rect x="76" y="151" width="58" height="46" rx="7" fill="#E8E9EA"/>
+    <path d="M82 190 l15 -20 11 10 9 -13 11 15" fill="none" stroke="#AEB5BC" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="145" y="153" width="67" height="8" rx="4" fill="#C9CDD2"/>
+    <rect x="145" y="169" width="51" height="7" rx="3.5" fill="#E0E2E5"/>
+    <rect x="76" y="210" width="133" height="7" rx="3.5" fill="#D9DCE0"/>
+    <rect x="76" y="226" width="113" height="7" rx="3.5" fill="#E5E7E9"/>
+    <rect x="76" y="242" width="91" height="7" rx="3.5" fill="#E5E7E9"/>
+  </g>
+  <!-- image preview -->
+  <g filter="url(#shadow)" transform="rotate(7 341 213)">
+    <rect x="260" y="151" width="165" height="117" rx="15" fill="#FFFFFF" stroke="#17191E" stroke-width="3.5"/>
+    <rect x="271" y="162" width="143" height="95" rx="9" fill="#7FCDE8"/>
+    <path d="M274 237 l39 -45 23 24 22 -19 52 54 h-133z" fill="#3D9BC5"/>
+    <circle cx="383" cy="183" r="11" fill="#FFD94D"/>
+    <path d="M277 252 h131" stroke="#FFFFFF" stroke-width="2" opacity=".85"/>
+  </g>
+  <!-- floating link badge -->
+  <g transform="translate(390 125) rotate(12)">
+    <rect width="73" height="73" rx="20" fill="#DCC5FF" stroke="#17191E" stroke-width="3.5"/>
+    <path d="M29 42 l-5 5 a11 11 0 0 1 -15 -15 l12 -12 a11 11 0 0 1 15 0 M44 31 l5 -5 a11 11 0 0 1 15 15 l-12 12 a11 11 0 0 1 -15 0 M25 39 l23 -18" transform="translate(7 7)" fill="none" stroke="#17191E" stroke-width="4.5" stroke-linecap="round"/>
+  </g>
+  <path d="M455 216 l13 -3 M451 231 l14 4 M438 242 l5 12" stroke="#329FCF" stroke-width="4" stroke-linecap="round"/>
+</svg>

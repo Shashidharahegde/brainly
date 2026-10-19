@@ -1,4 +1,4 @@
-
+//backend/src/processors/noteProcessor.js
 import Note from "../../models/Note.js";
 import orchestrator from "../services/extractionServices/orchestrator.js";
 import { processRAG } from "../services/ragService/orchestrator.js";

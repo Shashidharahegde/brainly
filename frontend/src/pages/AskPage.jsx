@@ -137,15 +137,15 @@ function ChatSidebar({ threads, chatId, open, loading, onClose, onNew, onSelect,
           type="button"
           aria-label="Close conversation sidebar"
           onClick={onClose}
-          className={`fixed inset-0 z-30 bg-stone-900/35 backdrop-blur-[2px] ${drawerMode ? "" : "md:hidden"}`}
+          className={`fixed inset-0 z-30 bg-[#182126]/35 backdrop-blur-[2px] ${drawerMode ? "" : "md:hidden"}`}
         />
       )}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-[280px] flex-col border-r border-stone-200 bg-[#f8f7f4] transition-transform duration-200 ${drawerMode ? "" : "md:static md:z-auto md:translate-x-0"} ${open ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed inset-y-0 left-0 z-40 flex w-[280px] flex-col border-r border-[#e9e5dc] bg-[linear-gradient(165deg,#fffefa_0%,#fffaf2_55%,#fdf5fb_100%)] transition-transform duration-200 ${drawerMode ? "" : "md:static md:z-auto md:translate-x-0"} ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
         <div className="flex h-[76px] shrink-0 items-center justify-between px-5">
-          <Link to="/" className="flex items-center gap-2.5 text-stone-900">
-            <span className="grid size-9 place-items-center rounded-xl bg-stone-900 text-white">
+          <Link to="/" className="flex items-center gap-2.5 text-[#182126]">
+            <span className="grid size-9 place-items-center rounded-xl bg-[#182126] text-white">
               <BookOpen size={18} strokeWidth={1.8} />
             </span>
             <span className="text-[15px] font-semibold tracking-[-0.03em]">Notes workspace</span>
@@ -154,7 +154,7 @@ function ChatSidebar({ threads, chatId, open, loading, onClose, onNew, onSelect,
             type="button"
             onClick={onClose}
             aria-label="Close sidebar"
-            className="rounded-lg p-1.5 text-stone-500 hover:bg-stone-200 md:hidden"
+            className="rounded-lg p-1.5 text-[#798088] hover:bg-[#fceffc] md:hidden"
           >
             <X size={18} />
           </button>
@@ -165,18 +165,18 @@ function ChatSidebar({ threads, chatId, open, loading, onClose, onNew, onSelect,
             type="button"
             onClick={onNew}
             disabled={loading}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-stone-900 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#182126] px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-[#303b40] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Plus size={16} /> New conversation
           </button>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-3">
-          <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.17em] text-stone-400">
+          <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.17em] text-[#99958c]">
             Conversations
           </p>
           {threads.length === 0 ? (
-            <p className="px-3 py-3 text-xs leading-5 text-stone-400">
+            <p className="px-3 py-3 text-xs leading-5 text-[#92999d]">
               {loading ? "Loading conversations…" : "Your saved conversations will appear here."}
             </p>
           ) : (
@@ -190,11 +190,11 @@ function ChatSidebar({ threads, chatId, open, loading, onClose, onNew, onSelect,
                   aria-current={chatId === thread.id ? "page" : undefined}
                   className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                     chatId === thread.id
-                      ? "bg-white text-stone-900 shadow-sm ring-1 ring-stone-200"
-                      : "text-stone-700 hover:bg-stone-200/60"
+                      ? "bg-[#fff1c7] text-[#182126] shadow-sm ring-1 ring-[#eddfb4]"
+                      : "text-[#59636a] hover:bg-[#eaf6ff]"
                   }`}
                 >
-                  <MessageCircle size={15} className="shrink-0 text-stone-400" />
+                  <MessageCircle size={15} className="shrink-0 text-[#8e9b9e]" />
                   <span className="truncate">{thread.title}</span>
                 </button>
               ))}
@@ -202,15 +202,8 @@ function ChatSidebar({ threads, chatId, open, loading, onClose, onNew, onSelect,
           )}
         </div>
 
-        <div className="border-t border-stone-200 p-4">
-          <div className="rounded-xl border border-stone-200 bg-white/70 p-3">
-            <div className="flex items-center gap-2 text-xs font-semibold text-stone-700">
-              <span className="size-1.5 rounded-full bg-emerald-500" /> Notes assistant
-            </div>
-            <p className="mt-1.5 text-[11px] leading-5 text-stone-500">
-              Ask questions across your saved knowledge.
-            </p>
-          </div>
+        <div className="border-t border-[#e9e5dc] p-4">
+
         </div>
       </aside>
     </>
@@ -226,7 +219,7 @@ function SourceChips({ sources }) {
         if (!source || typeof source !== "object") return null;
         const title = source.title ?? source.noteTitle ?? `Source ${index + 1}`;
         const noteId = source.noteId;
-        const common = "inline-flex max-w-full items-center gap-2 rounded-full border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs text-stone-700 transition-colors hover:bg-stone-100";
+        const common = "inline-flex max-w-full items-center gap-2 rounded-full border border-[#e9e5dc] bg-[#fff9df] px-3 py-1.5 text-xs text-[#59636a] transition-colors hover:bg-[#fff1c7]";
         const label = (
           <><BookOpen size={12} /><span className="max-w-[200px] truncate">{title}</span></>
         );
@@ -261,7 +254,7 @@ function ChatMessage({ item, onCopy }) {
           <>
             <MessageContent
               markdown
-              className="!w-full !max-w-none !rounded-none !border-0 !bg-transparent !p-0 !text-[14px] !leading-7 !text-stone-800"
+              className="!w-full !max-w-none !rounded-none !border-0 !bg-transparent !p-0 !text-[14px] !leading-7 !text-[#182126]"
             >
               {item.content}
             </MessageContent>
@@ -271,14 +264,14 @@ function ChatMessage({ item, onCopy }) {
               onClick={() => onCopy(item.content)}
               aria-label="Copy answer"
               title="Copy answer"
-              className="mt-2 rounded-lg p-1.5 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700"
+              className="mt-2 rounded-lg p-1.5 text-[#92999d] transition-colors hover:bg-[#eaf6ff] hover:text-[#182126]"
             >
               <Copy size={14} />
             </button>
           </>
         ) : (
           <>
-            <MessageContent className="!rounded-2xl !rounded-tr-md !border-0 !bg-[#f1f0ed] !px-4 !py-3 !text-[14px] !leading-6 !text-stone-900 whitespace-pre-wrap break-words">
+            <MessageContent className="!rounded-2xl !rounded-tr-md !border-0 !bg-[#eaf6ff] !px-4 !py-3 !text-[14px] !leading-6 !text-[#182126] whitespace-pre-wrap break-words">
               {item.content}
             </MessageContent>
             {item.status === "uncertain" && (
@@ -540,7 +533,7 @@ export default function AskPage({ fullPage = false, drawerOpen = false, onClose 
   const currentTitle = currentThread?.title || shortTitle(messages.find((item) => item.role === "user")?.content || "Ask your notes");
 
   const chat = (
-    <div className={`flex w-full overflow-hidden bg-[#fdfcfb] text-stone-900 antialiased ${fullPage ? "h-[calc(100dvh-3.5rem)] min-h-[480px]" : "h-full min-h-0"}`}>
+    <div className={`flex w-full overflow-hidden bg-[linear-gradient(145deg,#fffefa_0%,#fffaf2_60%,#fceffc_100%)] text-[#182126] antialiased ${fullPage ? "h-[calc(100dvh-3.5rem)] min-h-[480px]" : "h-full min-h-0"}`}>
       {fullPage && <ChatSidebar
         threads={threads}
         chatId={chatId}
@@ -553,29 +546,26 @@ export default function AskPage({ fullPage = false, drawerOpen = false, onClose 
       />}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-[76px] shrink-0 items-center justify-between border-b border-stone-100 bg-white/80 px-4 backdrop-blur-md sm:px-7">
+        <header className="flex h-[76px] shrink-0 items-center justify-between border-b border-[#e9e5dc]  px-4 backdrop-blur-md sm:px-7">
           <div className="flex min-w-0 items-center gap-3">
             {fullPage && <button
               type="button"
               onClick={() => setSidebarOpen(true)}
-              className="rounded-lg p-2 text-stone-600 hover:bg-stone-100 md:hidden"
+              className="rounded-lg p-2 text-[#59636a] hover:bg-white/70 md:hidden"
               aria-label="Open conversations"
             >
               <Menu size={19} />
             </button>}
             <div className="min-w-0">
               <div className="truncate text-sm font-semibold tracking-tight">{currentTitle}</div>
-              <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-stone-500">
-                <span className="size-1.5 rounded-full bg-emerald-500" />
-                Knowledge assistant
-              </div>
+          
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Link
               to="/"
               onClick={fullPage ? onClose : undefined}
-              className="hidden items-center gap-1.5 rounded-full border border-stone-200 px-3 py-2 text-xs font-medium text-stone-600 transition-colors hover:bg-stone-50 sm:flex"
+              className="hidden items-center gap-1.5 rounded-full border border-[#e9e5dc] bg-white/70 px-3 py-2 text-xs font-medium text-[#59636a] transition-colors hover:bg-white sm:flex"
             >
               <ArrowLeft size={14} /> All notes
             </Link>
@@ -583,16 +573,16 @@ export default function AskPage({ fullPage = false, drawerOpen = false, onClose 
               type="button"
               onClick={newConversation}
               disabled={loading || loadingChat || loadingChats}
-              className="inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-white px-3 py-2 text-xs font-medium shadow-sm transition-colors hover:bg-stone-50 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-full border border-[#e9e5dc] bg-white/85 px-3 py-2 text-xs font-medium shadow-sm transition-colors hover:bg-[#fff9df] disabled:opacity-50"
             >
               <Plus size={15} /> <span className="hidden sm:inline">New chat</span>
             </button>
             {!fullPage && (
               <>
-                <button type="button" onClick={onExpand} aria-label="Open chat full screen" title="Open full screen" className="rounded-full border border-stone-200 bg-white p-2 text-stone-600 hover:bg-stone-50">
+                <button type="button" onClick={onExpand} aria-label="Open chat full screen" title="Open full screen" className="rounded-full border border-[#e9e5dc] bg-white/85 p-2 text-[#59636a] hover:bg-[#eaf6ff]">
                   <Maximize2 size={15} />
                 </button>
-                <button type="button" data-ask-drawer-close onClick={onClose} aria-label="Close chat" className="rounded-full border border-stone-200 bg-white p-2 text-stone-600 hover:bg-stone-50">
+                <button type="button" data-ask-drawer-close onClick={onClose} aria-label="Close chat" className="rounded-full border border-[#e9e5dc] bg-white/85 p-2 text-[#59636a] hover:bg-[#eaf6ff]">
                   <X size={15} />
                 </button>
               </>
@@ -603,30 +593,30 @@ export default function AskPage({ fullPage = false, drawerOpen = false, onClose 
         <ChatContainerRoot className="min-h-0 flex-1">
           <ChatContainerContent className="mx-auto flex w-full max-w-[860px] flex-col gap-7 px-4 pb-8 pt-8 sm:px-8 sm:pt-12">
             {loadingChats || loadingChat ? (
-              <div className="flex min-h-[min(58vh,540px)] items-center justify-center gap-3 text-sm text-stone-500" role="status">
+              <div className="flex min-h-[min(58vh,540px)] items-center justify-center gap-3 text-sm text-[#798088]" role="status">
                 <LoaderCircle size={17} className="animate-spin" /> Loading conversation…
               </div>
             ) : messages.length === 0 ? (
               <div className="flex min-h-[min(58vh,540px)] flex-col items-center justify-center py-10 text-center">
-                <div className="mb-7 grid size-[70px] place-items-center rounded-[24px] border border-stone-200 bg-white shadow-[0_12px_35px_rgba(68,57,45,0.07)]">
-                  <Sparkles size={29} strokeWidth={1.6} className="text-stone-700" />
+                <div className="mb-7 grid size-[70px] place-items-center rounded-[24px] border border-[#eadcae] bg-[#fff9df] shadow-[0_12px_35px_rgba(68,57,45,0.07)]">
+                  <Sparkles size={29} strokeWidth={1.6} className="text-[#bc923e]" />
                 </div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.19em] text-stone-400">Your personal knowledge space</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.19em] text-[#99958c]">Your personal knowledge space</p>
                 <h1 className="max-w-lg text-[30px] font-semibold tracking-[-0.045em] sm:text-[38px]">
                   What would you like to explore?
                 </h1>
-                <p className="mt-3 max-w-md text-sm leading-6 text-stone-500">
+                <p className="mt-3 max-w-md text-sm leading-6 text-[#798088]">
                   Ask questions, revisit ideas, and find connections across the notes you have collected.
                 </p>
-                <div className="mt-9 grid w-full max-w-[590px] grid-cols-1 gap-2.5 sm:grid-cols-2">
+                <div className="mt-9 grid w-full max-w-[590px] grid-cols-1 gap-2.5 sm:grid-cols-2 [&>*:nth-child(4n+1)]:!bg-[#fff9df] [&>*:nth-child(4n+2)]:!bg-[#eaf8ff] [&>*:nth-child(4n+3)]:!bg-[#fce8fa] [&>*:nth-child(4n+4)]:!bg-[#fffaf2]">
                   {SUGGESTIONS.map((item) => (
                     <PromptSuggestion
                       key={item.label}
                       disabled={loading || loadingChat || loadingChats}
                       onClick={() => handleQuery(null, item.prompt)}
-                      className="!justify-between !rounded-xl !border !border-stone-200 !bg-white !px-4 !py-3 !text-left !text-[13px] !text-stone-700 shadow-sm transition-all hover:!-translate-y-0.5 hover:!border-stone-300 hover:!bg-stone-50 motion-reduce:transform-none"
+                      className="!justify-between !rounded-xl !border !border-[#e9e5dc] !px-4 !py-3 !text-left !text-[13px] !text-[#182126] shadow-sm transition-all hover:!-translate-y-0.5 hover:!border-[#d8d6d0] hover:!shadow-md motion-reduce:transform-none"
                     >
-                      {item.label}<ChevronRight size={14} className="ml-2 text-stone-400" />
+                      {item.label}<ChevronRight size={14} className="ml-2 text-[#92999d]" />
                     </PromptSuggestion>
                   ))}
                 </div>
@@ -635,8 +625,8 @@ export default function AskPage({ fullPage = false, drawerOpen = false, onClose 
               <>
                 {messages.map((item) => <ChatMessage key={item.id} item={item} onCopy={copyAnswer} />)}
                 {loading && (
-                  <div className="flex items-center gap-3 pl-1 text-sm text-stone-500" role="status" aria-live="polite">
-                    <span className="grid size-8 place-items-center rounded-full bg-stone-900 text-white"><Sparkles size={14} /></span>
+                  <div className="flex items-center gap-3 pl-1 text-sm text-[#798088]" role="status" aria-live="polite">
+                    <span className="grid size-8 place-items-center rounded-full bg-[#182126] text-white"><Sparkles size={14} /></span>
                     <LoaderCircle size={15} className="animate-spin" /> Searching your notes…
                   </div>
                 )}
@@ -652,7 +642,7 @@ export default function AskPage({ fullPage = false, drawerOpen = false, onClose 
           </ChatContainerContent>
         </ChatContainerRoot>
 
-        <div className="shrink-0 border-t border-stone-100 bg-white/95 px-3 pb-4 pt-3 sm:px-8 sm:pb-5">
+        <div className="shrink-0 border-t border-[#e9e5dc] bg-[#fffefa]/95 px-3 pb-4 pt-3 sm:px-8 sm:pb-5">
           <div className="mx-auto max-w-[800px]">
             <PromptInput
               value={message}
@@ -661,26 +651,26 @@ export default function AskPage({ fullPage = false, drawerOpen = false, onClose 
               disabled={loading || loadingChat || loadingChats}
               isLoading={loading}
               maxHeight={200}
-              className="!rounded-[22px] !border !border-stone-200 !bg-white !p-2 shadow-[0_8px_32px_rgba(34,30,26,0.06)] focus-within:!border-stone-400"
+              className="!rounded-[22px] !border !border-[#e9e5dc] !bg-white !p-2 shadow-[0_8px_32px_rgba(34,30,26,0.06)] focus-within:!border-[#a9cbd9]"
             >
               <PromptInputTextarea
-                className="!min-h-[54px] !text-sm !text-stone-900 placeholder:!text-stone-400"
+                className="!min-h-[54px] !text-sm !text-[#182126] placeholder:!text-[#9ca3a6]"
                 placeholder="Ask a question about your notes…"
               />
               <PromptInputActions className="items-center justify-between px-2 pb-1 pt-1">
-                <span className="text-[11px] text-stone-400">Enter to send · Shift + Enter for newline</span>
+                <span className="text-[11px] text-[#92999d]">Enter to send · Shift + Enter for newline</span>
                 <button
                   type="button"
                   onClick={handleQuery}
                   disabled={loading || loadingChat || loadingChats || !message.trim()}
                   aria-label="Send message"
-                  className="grid size-9 shrink-0 place-items-center rounded-full bg-stone-900 text-white transition-all enabled:hover:-translate-y-0.5 enabled:hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-35 motion-reduce:transform-none"
+                  className="grid size-9 shrink-0 place-items-center rounded-full bg-[#182126] text-white transition-all enabled:hover:-translate-y-0.5 enabled:hover:bg-[#303b40] disabled:cursor-not-allowed disabled:opacity-35 motion-reduce:transform-none"
                 >
                   {loading ? <LoaderCircle size={17} className="animate-spin" /> : <ArrowUp size={17} />}
                 </button>
               </PromptInputActions>
             </PromptInput>
-            <p className="mt-2.5 text-center text-[11px] leading-5 text-stone-400">
+            <p className="mt-2.5 text-center text-[11px] leading-5 text-[#92999d]">
               Answers may be incomplete. Check the original note sources.
             </p>
           </div>

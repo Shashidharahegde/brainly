@@ -1,4 +1,5 @@
-// split the text into managable chunks
+//backend/src/services/ragService/ragService/orchestrator.js
+
 
 import { chunckCreator } from "./chunkCreator.js";
 import { generateEmbeddings } from "./createEmbeddings.js";

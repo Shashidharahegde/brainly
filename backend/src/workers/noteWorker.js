@@ -1,3 +1,4 @@
+//backend/src/workers/noteWorker.js
 import "dotenv/config";
 import {Worker} from "bullmq"
 import {connection } from '../config/redis.js'

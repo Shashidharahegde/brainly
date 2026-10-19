@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 320" role="img" aria-labelledby="title desc">
+  <title id="title">Create notes</title>
+  <desc id="desc">A friendly note editor with document, image, and audio attachments.</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#28231d" flood-opacity=".12"/></filter>
+  </defs>
+  <!-- soft yellow paper wash -->
+  <path d="M36 66 C54 23 126 28 175 34 C237 14 310 25 356 42 C423 28 474 53 482 97 C498 144 476 181 486 219 C492 266 445 294 390 284 C326 301 271 287 225 295 C151 306 85 285 68 249 C29 222 20 181 35 146 C18 115 17 91 36 66Z" fill="#FFF4B8" opacity=".82"/>
+  <path d="M42 263 C112 278 174 269 226 281 M62 273 C121 286 177 280 217 288" fill="none" stroke="#FFD83D" stroke-width="5" stroke-linecap="round" opacity=".75"/>
+  <!-- little excitement strokes -->
+  <path d="M92 45 l-9 -17 M108 40 l2 -21 M125 47 l12 -15" fill="none" stroke="#F2C72D" stroke-width="5" stroke-linecap="round"/>
+  <!-- document tile -->
+  <g transform="translate(47 88) rotate(-8 32 32)">
+    <rect width="65" height="65" rx="16" fill="#BDF27C" stroke="#17191E" stroke-width="3.5"/>
+    <path d="M22 15 h17 l9 9 v25 h-26z M39 15 v10 h9 M27 31 h14 M27 37 h14 M27 43 h10" fill="none" stroke="#17191E" stroke-width="3.3" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <!-- image tile -->
+  <g transform="translate(30 166) rotate(7 31 31)">
+    <rect width="62" height="62" rx="16" fill="#E9B6FF" stroke="#17191E" stroke-width="3.5"/>
+    <rect x="14" y="15" width="34" height="31" rx="4" fill="none" stroke="#17191E" stroke-width="3"/>
+    <circle cx="37" cy="24" r="4" fill="#17191E"/>
+    <path d="M17 42 l10 -11 7 7 5 -5 7 9" fill="none" stroke="#17191E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <!-- microphone tile -->
+  <g transform="translate(64 232) rotate(-5 28 28)">
+    <rect width="56" height="56" rx="15" fill="#A6E8FF" stroke="#17191E" stroke-width="3.5"/>
+    <rect x="23" y="12" width="10" height="20" rx="5" fill="none" stroke="#17191E" stroke-width="3.3"/>
+    <path d="M17 25 v2 a11 11 0 0 0 22 0 v-2 M28 38 v6 M21 44 h14" fill="none" stroke="#17191E" stroke-width="3.3" stroke-linecap="round"/>
+  </g>
+  <!-- editor window -->
+  <g filter="url(#shadow)">
+    <rect x="125" y="63" width="336" height="220" rx="19" fill="#FFFFFF" stroke="#17191E" stroke-width="4"/>
+    <path d="M127 91 h332" stroke="#DCD9D2" stroke-width="2.5"/>
+    <circle cx="148" cy="79" r="5.5" fill="#FF7776"/><circle cx="166" cy="79" r="5.5" fill="#FFD84F"/><circle cx="184" cy="79" r="5.5" fill="#8DDC78"/>
+    <rect x="151" y="112" width="173" height="11" rx="5.5" fill="#DCDDE0"/>
+    <rect x="151" y="137" width="240" height="10" rx="5" fill="#E5E5E7"/>
+    <rect x="151" y="159" width="220" height="10" rx="5" fill="#E5E5E7"/>
+    <rect x="151" y="181" width="247" height="10" rx="5" fill="#E5E5E7"/>
+    <rect x="151" y="203" width="184" height="10" rx="5" fill="#E5E5E7"/>
+    <path d="M151 242 h90" stroke="#F5D84D" stroke-width="7" stroke-linecap="round"/>
+    <path d="M151 255 h131" stroke="#E5E5E7" stroke-width="8" stroke-linecap="round"/>
+  </g>
+  <!-- little pen/spark -->
+  <path d="M423 33 l-10 18 M439 42 l4 -16 M452 56 l15 -9" stroke="#F4CF35" stroke-width="4.5" stroke-linecap="round"/>
+</svg>

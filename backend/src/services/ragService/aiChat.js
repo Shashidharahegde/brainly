@@ -14,10 +14,8 @@ export async function aiChat({ query, history, ownerId }) {
       throw new Error("A question is required");
     }
 
-    // 1. Retrieve relevant chunks
     const chunks = await retrieveChunks(query, ownerId);
 
-    // 2. Convert chunks into context text
     const context = chunks
       .map((chunk) => {
         const origin = chunk.mediaType
@@ -28,12 +26,10 @@ export async function aiChat({ query, history, ownerId }) {
       })
       .join("\n\n");
 
-    // 3. Convert history into readable text
     const chatHistory = history
       .map((msg) => `${msg.role}: ${msg.content}`)
       .join("\n");
 
-    // 4. Ask Gemini
     const response = await ai.models.generateContent({
       model: "gemini-3.5-flash-lite",
       config: {

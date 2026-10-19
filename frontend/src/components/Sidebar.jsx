@@ -114,7 +114,7 @@ export default function Sidebar({ desktopOpen, mobileOpen, onMobileClose, onAskO
       >
         <div className="sticky top-0 h-screen w-64 overflow-y-auto">
           <div className="flex h-16 items-center border-b border-base-300 px-6">
-            <span className="text-lg font-bold tracking-tight">Workspace</span>
+            <span className="text-lg font-bold tracking-tight">Brainly</span>
           </div>
           <SidebarContent onAskOpen={onAskOpen} />
         </div>

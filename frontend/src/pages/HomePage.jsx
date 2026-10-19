@@ -7,12 +7,11 @@ import CreatePageModal from "./CreatePageModal";
 import TopBar from "../components/TopBar";
 import ConfirmDialog from "../components/Confirmation";
 import api from "../lib/api";
+import WelcomePopup from "../components/WelcomePopup";
 
 function matchesSearch(note, query) {
   const textFromBlocks = Array.isArray(note.blocks)
-    ? note.blocks
-        .map((block) => block.text || block.url || "")
-        .join(" ")
+    ? note.blocks.map((block) => block.text || block.url || "").join(" ")
     : "";
 
   const searchable = [
@@ -41,7 +40,9 @@ export default function HomePage({ user = null }) {
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [showBulkDelete, setShowBulkDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  
+
+  const userInfo = JSON.parse(localStorage.getItem("user-info") || "null");
+
   useEffect(() => {
     const controller = new AbortController();
 
@@ -64,7 +65,9 @@ export default function HomePage({ user = null }) {
                 : null;
 
           if (!incoming) {
-            throw new Error("Unexpected notes response: expected an array of notes");
+            throw new Error(
+              "Unexpected notes response: expected an array of notes",
+            );
           }
 
           setNotes(incoming.filter((item) => item && item._id));
@@ -155,13 +158,19 @@ export default function HomePage({ user = null }) {
   function handleNoteCreated(newNote) {
     // Some controllers return { note: createdNote } instead of a note directly.
     const created = newNote?.note ?? newNote?.data?.note ?? newNote;
-    if (!created?._id || (!Array.isArray(created.blocks) && !created.content && !created.media)) {
+    if (
+      !created?._id ||
+      (!Array.isArray(created.blocks) && !created.content && !created.media)
+    ) {
       // Fetch canonical record instead of rendering an empty note preview.
       setReloadKey((value) => value + 1);
       return;
     }
 
-    setNotes((current) => [created, ...current.filter((item) => item._id !== created._id)]);
+    setNotes((current) => [
+      created,
+      ...current.filter((item) => item._id !== created._id),
+    ]);
   }
 
   function handleNoteDeleted(deletedNote) {
@@ -194,7 +203,9 @@ export default function HomePage({ user = null }) {
         : ids;
 
       const deletedSet = new Set(deletedIds);
-      setNotes((current) => current.filter((note) => !deletedSet.has(note._id)));
+      setNotes((current) =>
+        current.filter((note) => !deletedSet.has(note._id)),
+      );
       setSelectedIds((current) => {
         const next = new Set(current);
         deletedIds.forEach((id) => next.delete(id));
@@ -204,13 +215,19 @@ export default function HomePage({ user = null }) {
       setShowBulkDelete(false);
       if (deletedIds.length === ids.length) {
         exitSelection();
-        toast.success(`${ids.length} note${ids.length === 1 ? "" : "s"} deleted`);
+        toast.success(
+          `${ids.length} note${ids.length === 1 ? "" : "s"} deleted`,
+        );
       } else {
-        toast(`${deletedIds.length} of ${ids.length} notes deleted. Retry the remaining selection.`);
+        toast(
+          `${deletedIds.length} of ${ids.length} notes deleted. Retry the remaining selection.`,
+        );
       }
     } catch (error) {
       console.error("Unable to delete selected notes:", error);
-      toast.error(error.response?.data?.message || "Couldn't delete selected notes.");
+      toast.error(
+        error.response?.data?.message || "Couldn't delete selected notes.",
+      );
       // Keep selection intact so the user can retry.
     } finally {
       setDeleting(false);
@@ -219,6 +236,7 @@ export default function HomePage({ user = null }) {
 
   return (
     <div className="min-h-screen bg-base-100">
+      <WelcomePopup user={userInfo} />
       <TopBar
         user={user}
         value={search}
@@ -229,7 +247,9 @@ export default function HomePage({ user = null }) {
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">Recent Notes</h2>
+            <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
+              Recent Notes
+            </h2>
             <p className="mt-1 text-sm text-base-content/50">
               {search.trim()
                 ? `${filteredNotes.length} matching note${filteredNotes.length === 1 ? "" : "s"}`
@@ -309,7 +329,8 @@ export default function HomePage({ user = null }) {
           <div className="flex min-h-80 flex-col items-center justify-center text-center">
             <h3 className="text-lg font-semibold">No notes yet</h3>
             <p className="mt-2 max-w-sm text-sm text-base-content/50">
-              Capture a thought, save a link, or add something you want to come back to.
+              Capture a thought, save a link, or add something you want to come
+              back to.
             </p>
             <button
               type="button"
@@ -322,7 +343,9 @@ export default function HomePage({ user = null }) {
         ) : filteredNotes.length === 0 ? (
           <div className="flex min-h-64 flex-col items-center justify-center text-center">
             <h3 className="text-lg font-semibold">No matching notes</h3>
-            <p className="mt-2 text-sm text-base-content/50">Try another search term.</p>
+            <p className="mt-2 text-sm text-base-content/50">
+              Try another search term.
+            </p>
             <button
               type="button"
               onClick={() => handleSearchChange("")}
@@ -337,14 +360,22 @@ export default function HomePage({ user = null }) {
               const selected = selectedIds.has(note._id);
 
               return (
+                
                 <div
                   key={note._id}
                   className={`relative rounded-2xl motion-safe:transition-transform motion-safe:duration-200 motion-safe:hover:-translate-y-0.5 ${
-                    selected ? "ring-2 ring-slate-700 ring-offset-2 ring-offset-base-100" : ""
+                    selected
+                      ? "ring-2 ring-slate-700 ring-offset-2 ring-offset-base-100"
+                      : ""
                   }`}
                 >
+                  
+
                   {/* In selection mode, deactivate the card link and its delete button. */}
-                  <div inert={selectionMode ? "" : undefined} aria-hidden={selectionMode}>
+                  <div
+                    inert={selectionMode ? "" : undefined}
+                    aria-hidden={selectionMode}
+                  >
                     <NoteCard note={note} onDelete={handleNoteDeleted} />
                   </div>
 

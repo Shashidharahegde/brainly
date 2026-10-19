@@ -13,6 +13,8 @@ export default function useRefreshHandler({ setIsAuthenticated }) {
       token = userInfo?.token ?? null;
     } catch {
       localStorage.removeItem("user-info");
+      localStorage.removeItem("token");
+      navigate("/login",  { replace: true })
     }
 
     setIsAuthenticated(Boolean(token));
